@@ -363,20 +363,41 @@ table.grid {
 .error-suggestion {
   color: var(--text);
 }
+/* Panel-scoped colors: the pink/dark error backgrounds fail AA with the
+   global muted token, so these use tones measured >= 4.5:1 (WCAG AA). */
+.error-panel .error-original code,
+.error-panel .error-toggle {
+  color: var(--strong); /* #3b4252 on #fce4e4 = 8.3:1 */
+}
+.error-panel .error-label {
+  color: #8f3541; /* 6.3:1 on #fce4e4 — keeps the red identity */
+}
+[data-theme="dark"] .error-panel .error-original code,
+[data-theme="dark"] .error-panel .error-toggle {
+  color: var(--heading); /* #eceff4 on #4c566a = 6.4:1 */
+}
+[data-theme="dark"] .error-panel .error-suggestion {
+  color: var(--heading); /* dark --text only reaches 3.8:1 here */
+}
+[data-theme="dark"] .error-panel .error-label {
+  color: #f2c1c7; /* 4.65:1 on #4c566a */
+}
 .error-original code {
   font-size: 0.75rem;
-  color: var(--muted);
   white-space: pre-wrap;
 }
 .error-toggle {
   margin-top: 8px;
   font-size: 0.72rem;
-  color: var(--muted);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 .error-toggle:hover {
-  color: var(--text);
+  text-decoration-thickness: 2px;
+}
+.error-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 body[data-mode="card"] .error-toggle {
   display: none; /* cards show the simplified explanation only */
