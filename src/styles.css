@@ -1,0 +1,217 @@
+/* Nord tokens — light + dark (matches prototype/bench-full.html, r8-approved).
+   pharos_theme is the shared Pharos theme key; the FOUC snippet lives in
+   index.html so first paint already has the right palette. */
+:root {
+  --bg: #ffffff;
+  --surface: #eceff4;
+  --border: #e5e9f0;
+  --divider: #d8dee9;
+  --text: #4c566a;
+  --strong: #3b4252;
+  --heading: #2e3440;
+  --muted: #8891a0;
+  --accent: #5e81ac;
+  --ok: #4a7a2e;
+  --err: #bf4e5a;
+  --err-bg: #fce4e4;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+[data-theme="dark"] {
+  --bg: #3b4252;
+  --surface: #2e3440;
+  --border: #434c5e;
+  --divider: #4c566a;
+  --text: #aebbcf;
+  --strong: #d8dee9;
+  --heading: #eceff4;
+  --muted: #81a1c1;
+  --accent: #81a1c1;
+  --ok: #95c088;
+  --err: #e8a0a0;
+  --err-bg: #4c566a;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+}
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.5 Inter, system-ui, sans-serif;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.spacer {
+  flex: 1;
+}
+
+/* topbar */
+.top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border);
+  flex: none;
+}
+.top .name {
+  font-weight: 600;
+  color: var(--heading);
+  font-size: 0.9rem;
+}
+.chip {
+  font-size: 0.75rem;
+  color: var(--muted);
+  background: var(--surface);
+  border-radius: 6px;
+  padding: 2px 8px;
+}
+.iconbtn {
+  padding: 4px 8px;
+  border-radius: 6px;
+  color: var(--text);
+}
+.iconbtn:hover {
+  background: var(--surface);
+}
+
+/* editor */
+.ed-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+  flex: none;
+}
+.run {
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 5px 14px;
+  border-radius: 8px;
+}
+.run:hover:not(:disabled) {
+  opacity: 0.9;
+}
+.run:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.kbd-hint {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+kbd {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0 4px;
+}
+.editor {
+  display: block;
+  width: 100%;
+  height: 30vh;
+  min-height: 110px;
+  resize: vertical;
+  padding: 14px 16px;
+  border: none;
+  outline: none;
+  background: var(--bg);
+  color: var(--strong);
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  border-bottom: 1px solid var(--border);
+}
+
+/* results */
+.results {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
+}
+.result-meta {
+  padding: 6px 14px;
+  font-size: 0.72rem;
+  color: var(--muted);
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 1;
+}
+table.grid {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.82rem;
+}
+.grid th {
+  position: sticky;
+  top: 22px;
+  background: var(--surface);
+  color: var(--strong);
+  text-align: left;
+  font-weight: 600;
+  padding: 7px 14px;
+  border-bottom: 1px solid var(--divider);
+  white-space: nowrap;
+}
+.grid td {
+  padding: 6px 14px;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+.grid tr:hover td {
+  background: var(--surface);
+}
+.null {
+  color: var(--muted);
+  font-style: italic;
+}
+.error-panel {
+  margin: 10px 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--err);
+  border-radius: 8px;
+  background: var(--err-bg);
+  color: var(--heading);
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  font-size: 0.82rem;
+}
+.error-label {
+  flex: none;
+  font-weight: 600;
+  color: var(--err);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.error-panel code,
+.boot-error {
+  font-family: var(--mono);
+  white-space: pre-wrap;
+}
+.boot-error {
+  margin: 10px 14px;
+  padding: 10px 12px;
+  border: 1px dashed var(--err);
+  border-radius: 8px;
+  font-size: 0.8rem;
+  line-height: 1.6;
+}

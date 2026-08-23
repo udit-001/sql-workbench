@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bench — compact drill in lesson</title>
+<script>(function(){var t=localStorage.getItem('pharos_theme');if(!t||t==='system'){t=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'}document.documentElement.dataset.theme=t})()</script>
+<style>
+:root{
+  --bg:#ffffff;--surface:#eceff4;--border:#e5e9f0;--divider:#d8dee9;
+  --text:#4c566a;--strong:#3b4252;--heading:#2e3440;--muted:#8891a0;
+  --accent:#5e81ac;--ok:#4a7a2e;--ok-bg:#e6f0e6;--err:#bf4e5a;--err-bg:#fce4e4;
+  --kw:#5e81ac;--str:#a3be8c;
+  --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+}
+[data-theme=dark]{
+  --bg:#3b4252;--surface:#2e3440;--border:#434c5e;--divider:#4c566a;
+  --text:#aebbcf;--strong:#d8dee9;--heading:#eceff4;--muted:#81a1c1;
+  --accent:#81a1c1;--ok:#95c088;--ok-bg:#2e3440;--err:#e8a0a0;--err-bg:#4c566a;
+  --kw:#81a1c1;--str:#a3be8c;
+}
+*{box-sizing:border-box;margin:0}
+body{background:var(--bg);color:var(--text);font:15px/1.75 Inter,system-ui,sans-serif;padding:32px 16px 64px}
+.container{max-width:56rem;margin:0 auto}
+h1{font-size:1.375rem;font-weight:700;color:var(--heading);letter-spacing:-.01em;margin-bottom:18px;line-height:1.4}
+h2{font-size:1.125rem;font-weight:600;color:var(--heading);margin:28px 0 10px}
+p{margin-bottom:14px}
+code{font-family:var(--mono);font-size:.85em;background:var(--surface);padding:1px 5px;border-radius:4px}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+
+/* callout = drill entry point */
+.callout{border-left:4px solid var(--accent);background:var(--surface);border-radius:0 8px 8px 0;padding:12px 16px;margin:20px 0;font-size:.9rem}
+.callout b{color:var(--strong)}
+
+/* the embedded drill card (stands in for the iframe) */
+.drill{border:1px solid var(--border);border-radius:8px;margin:14px 0 26px;overflow:hidden;background:var(--bg)}
+.drill-head{display:flex;align-items:center;gap:8px;padding:7px 12px;border-bottom:1px solid var(--border);background:var(--surface)}
+.drill-head .nm{font-weight:600;color:var(--heading);font-size:.82rem}
+.drill-head .fx{font-size:.72rem;color:var(--muted);background:var(--bg);border-radius:6px;padding:1px 8px}
+.drill-head .sp{flex:1}
+.mini-run{background:var(--accent);color:#fff;font-size:.78rem;font-weight:500;padding:4px 13px;border-radius:6px}
+.mini-reset{font-size:.74rem;color:var(--muted);padding:4px 8px;border-radius:6px}
+.mini-reset:hover{background:var(--surface)}
+.mini-ed{padding:12px 14px;font-family:var(--mono);font-size:.83rem;line-height:1.6;min-height:88px;color:var(--strong)}
+.c-kw{color:var(--kw);font-weight:600}.c-str{color:var(--str)}
+.caret{border-left:2px solid var(--accent);animation:bl 1s steps(1) infinite;margin-right:-1px}
+@keyframes bl{50%{border-color:transparent}}
+@media(prefers-reduced-motion:reduce){.caret{animation:none}}
+
+/* answer key — expected output */
+.expected{padding:0 14px 14px}
+.expected .lbl{font-size:.7rem;font-weight:500;letter-spacing:.04em;color:var(--muted);margin-bottom:6px}
+table.exp{border-collapse:collapse;width:100%;font-size:.8rem}
+.exp th{text-align:left;font-weight:600;color:var(--heading);padding:6px 12px;border-bottom:1px solid var(--divider);background:var(--surface)}
+.exp td{padding:5px 12px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:.76rem}
+
+/* reveal */
+details.reveal{border-top:1px solid var(--border)}
+details.reveal summary{cursor:pointer;padding:9px 14px;font-size:.8rem;color:var(--muted);list-style:none}
+details.reveal summary::before{content:'▸ '}
+details.reveal[open] summary::before{content:'▾ '}
+details.reveal summary:hover{color:var(--text);background:var(--surface)}
+details.reveal pre{margin:0;padding:12px 14px;font-family:var(--mono);font-size:.8rem;line-height:1.6;color:var(--strong);background:var(--surface);white-space:pre-wrap}
+
+/* inline quiz for context (existing pharos pattern) */
+.q{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin:20px 0}
+.q p{font-size:.9rem;margin-bottom:10px}
+.q .options{display:flex;gap:8px;flex-wrap:wrap}
+.q button{border:1px solid var(--border);background:var(--bg);border-radius:6px;padding:5px 12px;font-size:.82rem;color:var(--text)}
+.q button:hover{border-color:var(--divider)}
+.note{max-width:56rem;margin:40px auto 0;font-size:.75rem;color:var(--muted);border-top:1px dashed var(--border);padding-top:10px}
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>Aggregating results with GROUP BY</h1>
+
+<p>So far every query has returned <em>rows</em>. Analysts usually want <em>answers</em>:
+total revenue, orders per region, customers per month. That's what aggregation does.
+You already met <code>COUNT(*)</code> — now add <code>SUM()</code>, <code>AVG()</code>,
+and their sidekick <code>GROUP BY</code>.</p>
+
+<p>Quick check before you practice:</p>
+
+<div class="q">
+  <p>Which clause decides the "buckets" that aggregates fall into?</p>
+  <div class="options">
+    <button>ORDER BY</button><button>GROUP BY</button><button>JOIN ON</button>
+  </div>
+</div>
+
+<h2>Try it on real data</h2>
+
+<div class="callout"><b>Your turn:</b> revenue per region, highest first.
+The bench below is pre-loaded with the <code>ecommerce</code> dataset —
+check the schema panel if you forget a column name.</div>
+
+<div class="drill"><!-- stands in for the embedded workbench iframe -->
+  <div class="drill-head">
+    <span class="nm">sql-workbench</span><span class="fx" title="Practice dataset — reset restores it">ecommerce · sample data</span>
+    <span class="sp"></span>
+    <button class="mini-reset" title="Restore the original sample data">Reset data</button>
+    <button class="mini-run">▸ Run query</button>
+  </div>
+  <div class="mini-ed" contenteditable spellcheck="false"><span class="c-kw">SELECT</span> region,
+       COUNT(*) AS orders,
+       ROUND(SUM(total_amount), 2) AS revenue<span class="caret">&nbsp;</span>
+FROM orders
+GROUP BY region;</div>
+  <div class="expected">
+    <div class="lbl">WHAT YOU SHOULD SEE</div>
+    <table class="exp">
+      <thead><tr><th>region</th><th>orders</th><th>revenue</th></tr></thead>
+      <tbody>
+        <tr><td>south_asia</td><td>2,411</td><td>184203.50</td></tr>
+        <tr><td>europe</td><td>1,982</td><td>151977.10</td></tr>
+        <tr><td>north_america</td><td>1,744</td><td>140010.00</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <details class="reveal">
+    <summary>Stuck? Reveal one approach</summary>
+    <pre><span class="c-kw">SELECT</span> c.region,
+       COUNT(*) AS orders,
+       ROUND(SUM(o.total_amount), 2) AS revenue
+FROM orders o
+JOIN customers c ON c.id = o.customer_id
+GROUP BY c.region
+ORDER BY revenue DESC;</pre>
+  </details>
+</div>
+
+<p>Notice the drill above doesn't tell you right or wrong — it shows what came back,
+and the "what you should see" table is your mirror. When they match, move on.</p>
+
+<p>Every run lands in the bench's history. Studying through Pharos? Your agent reads
+that history before writing your next lesson — so struggling here quietly reshapes
+what you're taught next.</p>
+
+</div>
+<div class="note">PROTOTYPE — compact drill variant embedded mid-lesson (this card would be an iframe). React to: size, answer-key placement, reveal pattern, quiz pairing. <a href="bench-full.html" style="color:var(--accent)">Full bench variant →</a></div>
+<script>
+document.querySelectorAll('.q button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.q button').forEach(x=>x.disabled=true);
+  b.style.borderColor=b.textContent==='GROUP BY'?'var(--ok)':'var(--err)';
+  b.style.background=b.textContent==='GROUP BY'?'var(--ok-bg)':'var(--err-bg)';
+}));
+</script>
+</body>
+</html>

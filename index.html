@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>sql-workbench</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%232e3440'/%3E%3Cpath d='M3 5l3 3-3 3M7.5 11H13' stroke='%2381a1c1' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"
+    />
+    <!-- Theme FOUC guard — shared pharos_theme key with Pharos; LEARN-205
+         adds the live postMessage relay for embedded mode. -->
+    <script>
+      ;(function () {
+        var t = localStorage.getItem('pharos_theme')
+        if (!t || t === 'system') {
+          t = window.matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light'
+        }
+        document.documentElement.dataset.theme = t
+      })()
+    </script>
+    <script type="module" src="/src/main.ts"></script>
+  </head>
+  <body>
+    <header class="top">
+      <span class="name">sql-workbench</span>
+      <span class="chip" id="dataset-chip" hidden></span>
+      <span class="spacer"></span>
+      <button class="iconbtn" id="theme-toggle" aria-label="Toggle light or dark theme" title="Theme">◐</button>
+    </header>
+
+    <div class="ed-tools">
+      <button class="run" id="run-btn">▸ Run query</button>
+      <span class="spacer"></span>
+      <span class="kbd-hint"><kbd id="modkey">Ctrl</kbd>+<kbd>Enter</kbd> to run</span>
+    </div>
+
+    <textarea
+      id="editor"
+      class="editor"
+      spellcheck="false"
+      aria-label="SQL query"
+      placeholder="Type SQL, then press Ctrl+Enter…"
+    ></textarea>
+
+    <section id="results" class="results" aria-live="polite" aria-label="Query results"></section>
+  </body>
+</html>
