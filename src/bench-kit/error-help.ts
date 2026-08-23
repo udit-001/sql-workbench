@@ -25,10 +25,24 @@ export function explainSqlError(
 
   let match = /no such column: ([^\s"]+)/.exec(msg);
   if (match) {
-    const name = match[1] ?? "";
-    const suggestion = suggestName(name, context.columns);
+    // Qualified references ("c.regio") must fuzzy-match on the BARE part;
+    // including the alias prefix pushes edit distance past any threshold.
+    const raw = match[1] ?? "";
+    const dot = raw.lastIndexOf(".");
+    const qualifier = dot === -1 ? "" : raw.slice(0, dot);
+    const bare = dot === -1 ? raw : raw.slice(dot + 1);
+
+    const exact = context.columns.find((c) => c.toLowerCase() === bare.toLowerCase());
+    if (exact && qualifier) {
+      return {
+        title: `“${raw}” doesn't resolve`,
+        suggestion: `“${exact}” exists — the prefix “${qualifier}.” may point at the wrong table or alias.`,
+      };
+    }
+
+    const suggestion = suggestName(bare, context.columns);
     return {
-      title: `There's no column called “${name}”`,
+      title: `There's no column called “${raw}”`,
       suggestion: suggestion
         ? `Did you mean “${suggestion}”?`
         : "Check the spelling — or the column may live in another table (try a JOIN).",

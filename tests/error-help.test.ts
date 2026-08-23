@@ -41,6 +41,18 @@ describe("explainSqlError", () => {
     expect(hint?.suggestion).toMatch(/spelling/i);
   });
 
+  it("fuzzy-matches only the bare column when a qualifier is present", () => {
+    const hint = explainSqlError("no such column: c.regio", SCHEMA);
+    expect(hint?.title).toContain("c.regio");
+    expect(hint?.suggestion).toContain("region");
+  });
+
+  it("flags a wrong alias when the bare column exists", () => {
+    const hint = explainSqlError("no such column: c.region", SCHEMA);
+    expect(hint?.title).toContain("c.region");
+    expect(hint?.suggestion).toMatch(/exists.*wrong table or alias/s);
+  });
+
   it("explains no-such-table with suggestions", () => {
     const hint = explainSqlError("no such table: orderz", SCHEMA);
     expect(hint?.suggestion).toContain("orders");
