@@ -77,7 +77,7 @@ export class ImportModal {
     this.delimiterSelect.value = detectDelimiter(csvText);
     this.headerCheckbox.checked = true;
     this.errorBox.hidden = true;
-    await this.refresh();
+    this.refresh();
     this.overlay.classList.add("on");
     this.nameInput.focus();
   }
@@ -86,6 +86,7 @@ export class ImportModal {
     this.overlay.classList.remove("on");
     this.onImport = undefined;
     this.csvText = "";
+    this.filename = "";
   }
 
   /** Registers the execute callback; set fresh on every open. */
@@ -94,7 +95,7 @@ export class ImportModal {
   }
 
   /** Re-parse with current settings and repaint meta/preview/footer. */
-  async refresh(): Promise<void> {
+  refresh(): void {
     if (!this.csvText) return;
     const sizeKb = (new Blob([this.csvText]).size / 1024).toFixed(1);
     try {
@@ -126,11 +127,6 @@ export class ImportModal {
   private async submit(): Promise<void> {
     if (!this.onImport || !this.csvText) return;
     const name = sanitizeTableName(this.nameInput.value);
-    if (!name) {
-      this.showError("Enter a table name made of letters, digits and underscores.");
-      return;
-    }
-    this.nameInput.value = name;
     try {
       const parsed = parseCsv(this.csvText, {
         delimiter: this.delimiter(),
@@ -188,7 +184,8 @@ export class ImportModal {
 
 /** Pick whichever candidate delimiter appears most in the first line. */
 export function detectDelimiter(text: string): string {
-  const firstLine = text.slice(0, text.indexOf("\n") === -1 ? text.length : text.indexOf("\n"));
+  const newlineAt = text.indexOf("\n");
+  const firstLine = newlineAt === -1 ? text : text.slice(0, newlineAt);
   let best = ",";
   let bestCount = -1;
   for (const candidate of [",", ";", "\t"]) {

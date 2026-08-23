@@ -16,14 +16,14 @@ export interface ParsedCsv {
   rows: string[][];
 }
 
-/** Parse CSV text with RFC4180 quoting: "…" may span lines; "" escapes ".". */
+/** Parse CSV text with RFC4180 quoting: "…" may span lines; "" escapes '"'. */
 export function parseCsv(text: string, options: CsvParseOptions): ParsedCsv {
   const { delimiter, hasHeader } = options;
   if (!text.trim()) throw new Error("The file looks empty — nothing to import.");
 
   const records = splitRecords(text, delimiter);
   const first = records[0];
-  if (!first || records.length === 0) throw new Error("The file looks empty — nothing to import.");
+  if (!first) throw new Error("The file looks empty — nothing to import.");
 
   const fieldCount = first.length;
   records.forEach((record, i) => {
@@ -108,20 +108,22 @@ function splitRecords(text: string, delimiter: string): string[][] {
 }
 
 /**
- * Table names become SQL identifiers: lowercase [a-z0-9_] only, can't
- * start with a digit. Anything else collapses to `_`; empty gets `t`.
+ * Table/column names become SQL identifiers: lowercase [a-z0-9_] only,
+ * can't start with a digit. Anything else collapses to `_`; empty gets
+ * the caller's fallback (tables `t`, columns `col`).
  */
-export function sanitizeTableName(raw: string): string {
-  const name = raw.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
-  if (!name) return "t";
-  return /^\d/.test(name) ? `t_${name}` : name;
+function sanitizeIdentifier(raw: string, fallback: string, digitPrefix: string): string {
+  const name = raw.toLowerCase().trim().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+  if (!name) return fallback;
+  return /^\d/.test(name) ? `${digitPrefix}${name}` : name;
 }
 
-/** Column identifiers follow the same rules; empty headers become `col`. */
+export function sanitizeTableName(raw: string): string {
+  return sanitizeIdentifier(raw, "t", "t_");
+}
+
 export function sanitizeColumnName(raw: string): string {
-  const name = raw.toLowerCase().trim().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
-  if (!name) return "col";
-  return /^\d/.test(name) ? `c_${name}` : name;
+  return sanitizeIdentifier(raw, "col", "c_");
 }
 
 const INT_RE = /^[+-]?\d+$/;

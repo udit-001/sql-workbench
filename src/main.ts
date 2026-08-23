@@ -180,9 +180,12 @@ $("export-btn").addEventListener("click", () => {
 /**
  * Re-run every persisted CSV import against the current database. Called
  * after seeding on boot and on Reset — imported tables are the learner's
- * own data, so they survive both.
+ * own data, so they survive both. Failures KEEP the stored bytes (a
+ * transient error must not cost the learner their file); the table just
+ * doesn't appear this session.
  */
 async function replayImports(): Promise<void> {
+  const failed: string[] = [];
   for (const table of await listImportedTables()) {
     const outcome = await engine.run(
       buildImportScript(table.name, parseCsv(table.csvText, {
@@ -191,10 +194,12 @@ async function replayImports(): Promise<void> {
       })),
     );
     if (outcome.kind === "error") {
-      // A replay failure must not take the bench down; say why it's gone.
+      failed.push(table.name);
       console.error(`[sql-workbench] could not restore imported table "${table.name}": ${outcome.message}`);
-      await deleteImportedTable(table.name);
     }
+  }
+  if (failed.length > 0) {
+    ui.setStatus(`Could not restore: ${failed.join(", ")} — see console`);
   }
 }
 
@@ -273,7 +278,10 @@ resetButton.addEventListener("click", () => {
 
 /* --- Import CSV (LEARN-204) ----------------------------------------- */
 
-const MAX_CSV_BYTES = 50 * 1024 * 1024; // matches the Pharos-side dataset cap
+// Client-side guard only — protects the tab from multi-hundred-MB files.
+// The Pharos-side dataset cap and its server enforcement are LEARN-206.
+const MAX_CSV_BYTES = 50 * 1024 * 1024;
+const MAX_CSV_MB = MAX_CSV_BYTES / (1024 * 1024);
 
 const importModal = new ImportModal({
   overlay: $("import-overlay"),
@@ -288,6 +296,18 @@ const importModal = new ImportModal({
 });
 
 async function executeImport(filename: string, selection: ImportSelection): Promise<void> {
+  // Importing replaces a previous version of YOUR table, but never a
+  // sample/fixture one — that would silently destroy seeded practice data.
+  const existing = await loadSchema(engine);
+  if (existing.some((t) => t.name === selection.tableName)) {
+    const mine = (await listImportedTables()).some((t) => t.name === selection.tableName);
+    if (!mine) {
+      throw new Error(
+        `"${selection.tableName}" is already used by the sample data — pick another table name.`,
+      );
+    }
+  }
+
   const outcome = await engine.run(selection.script);
   if (outcome.kind === "error") throw new Error(outcome.message); // shown in the modal
 
@@ -320,12 +340,17 @@ async function executeImport(filename: string, selection: ImportSelection): Prom
 }
 
 async function openCsvFile(file: File): Promise<void> {
-  if (file.size > MAX_CSV_BYTES) {
-    ui.setStatus("CSV too large — the bench caps imports at 50 MB");
-    return;
+  try {
+    if (file.size > MAX_CSV_BYTES) {
+      ui.setStatus(`CSV too large — the bench caps imports at ${MAX_CSV_MB} MB`);
+      return;
+    }
+    importModal.onExecute((selection) => executeImport(file.name, selection));
+    await importModal.openFor(file.name, await file.text());
+  } catch (err) {
+    console.error("[sql-workbench] could not read CSV file", err);
+    ui.setStatus(`Could not read ${file.name} — see console`);
   }
-  importModal.onExecute((selection) => executeImport(file.name, selection));
-  await importModal.openFor(file.name, await file.text());
 }
 
 $("import-btn").addEventListener("click", () => {

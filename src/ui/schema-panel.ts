@@ -59,7 +59,7 @@ export class SchemaPanel {
       const count = document.createElement("span");
       count.className = "ty";
       count.title = "rows in table";
-      count.style.marginLeft = table.yours ? "auto" : "auto";
+      count.style.marginLeft = "auto";
       count.textContent = table.rowCount.toLocaleString("en-US");
       header.append(count);
       header.addEventListener("click", () => block.classList.toggle("open"));

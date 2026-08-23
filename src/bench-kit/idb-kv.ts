@@ -49,31 +49,27 @@ function memoryBackend(): KvBackend {
 }
 
 function idbBackend(db: IDBDatabase): KvBackend {
-  function tx<T>(mode: IDBTransactionMode, body: (store: IDBObjectStore) => IDBRequest<T>): Promise<T> {
+  function read<T>(body: (store: IDBObjectStore) => IDBRequest<T>): Promise<T> {
     return new Promise((resolve, reject) => {
-      const transaction = db.transaction(STORE, mode);
+      const transaction = db.transaction(STORE, "readonly");
       const request = body(transaction.objectStore(STORE));
       request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error ?? new Error("IndexedDB request failed"));
+      request.onerror = () => reject(request.error ?? new Error("IndexedDB read failed"));
+    });
+  }
+  function write(body: (store: IDBObjectStore) => void): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(STORE, "readwrite");
+      body(transaction.objectStore(STORE));
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error ?? new Error("IndexedDB write failed"));
+      transaction.onabort = () => reject(transaction.error ?? new Error("IndexedDB write aborted"));
     });
   }
   return {
-    get: (key) => tx("readonly", (store) => store.get(key)),
-    put: (key, value) =>
-      new Promise((resolve, reject) => {
-        const transaction = db.transaction(STORE, "readwrite");
-        transaction.objectStore(STORE).put(value, key);
-        transaction.oncomplete = () => resolve();
-        transaction.onerror = () => reject(transaction.error ?? new Error("IndexedDB write failed"));
-        transaction.onabort = () => reject(transaction.error ?? new Error("IndexedDB write aborted"));
-      }),
-    delete: (key) =>
-      new Promise((resolve, reject) => {
-        const transaction = db.transaction(STORE, "readwrite");
-        transaction.objectStore(STORE).delete(key);
-        transaction.oncomplete = () => resolve();
-        transaction.onerror = () => reject(transaction.error ?? new Error("IndexedDB delete failed"));
-      }),
+    get: (key) => read((store) => store.get(key)),
+    put: (key, value) => write((store) => store.put(value, key)),
+    delete: (key) => write((store) => store.delete(key)),
   };
 }
 
