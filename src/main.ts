@@ -4,6 +4,7 @@ import { buildImportScript, parseCsv } from "./bench-kit/csv";
 import { deleteImportedTable, listImportedTables, saveImportedTable, type ImportedTable } from "./bench-kit/csv-store";
 import { eventsToMarkdown } from "./bench-kit/export-markdown";
 import { fetchFixture } from "./bench-kit/fixture";
+import { highlightSql } from "./bench-kit/highlight";
 import type { Outcome } from "./bench-kit/engine";
 import { openJournal } from "./bench-kit/journal-idb";
 import type { WorkbenchEvent } from "./bench-kit/journal";
@@ -57,6 +58,33 @@ const ui = new DomUi($("run-btn"), $("results"), $("statusbar"));
 const bench = new Bench(engine, ui);
 const editor = $<HTMLTextAreaElement>("editor");
 const resetButton = $<HTMLButtonElement>("reset-btn");
+
+/* --- Syntax highlighting (LEARN-210): transparent textarea over a
+   colored twin. Programmatic .value swaps don't fire input, so every
+   prefill path calls refreshHighlight() explicitly. */
+const highlightLayer = $("highlight-layer");
+const highlightCode = $("highlight-code");
+
+function refreshHighlight(): void {
+  highlightCode.replaceChildren(
+    ...highlightSql(editor.value).map((token) => {
+      const span = document.createElement("span");
+      span.className = `tok-${token.kind}`;
+      span.textContent = token.text;
+      return span;
+    }),
+    // The textarea reserves one line past a trailing newline; match it
+    // so vertical scroll and caret position never drift apart.
+    document.createTextNode("\n"),
+  );
+  highlightLayer.scrollTop = editor.scrollTop;
+}
+
+editor.addEventListener("input", refreshHighlight);
+editor.addEventListener("scroll", () => {
+  highlightLayer.scrollTop = editor.scrollTop;
+  highlightLayer.scrollLeft = editor.scrollLeft;
+});
 
 /* Track the editor caret so schema-panel clicks insert where the learner
    was looking — not wherever the textarea's stale focus state points.
@@ -285,6 +313,7 @@ try {
     starterQuery = `SELECT *\nFROM ${tables[0].name}\nLIMIT 10;`;
   }
   editor.value = starterQuery;
+  refreshHighlight();
 
   const chip = $("dataset-chip");
   chip.textContent = `${currentDataset.title} · sample data`;
@@ -377,6 +406,7 @@ async function executeImport(filename: string, selection: ImportSelection): Prom
 
   editor.value = `SELECT *\nFROM ${selection.tableName}\nLIMIT 10;`;
   caret = null;
+  refreshHighlight();
   ui.setStatus(
     `Imported ${selection.rows.toLocaleString("en-US")} rows into ${selection.tableName}`,
   );

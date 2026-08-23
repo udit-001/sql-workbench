@@ -50,13 +50,16 @@
           <span class="kbd-hint"><kbd id="modkey">Ctrl</kbd>+<kbd>Enter</kbd> to run</span>
         </div>
 
-        <textarea
-          id="editor"
-          class="editor"
-          spellcheck="false"
-          aria-label="SQL query"
-          placeholder="Type SQL, then press Ctrl+Enter…"
-        ></textarea>
+        <div class="editor-wrap" id="editor-wrap">
+          <pre class="highlight-layer" id="highlight-layer" aria-hidden="true"><code class="highlight-code" id="highlight-code"></code></pre>
+          <textarea
+            id="editor"
+            class="editor"
+            spellcheck="false"
+            aria-label="SQL query"
+            placeholder="Type SQL, then press Ctrl+Enter…"
+          ></textarea>
+        </div>
 
         <div class="tabs" role="tablist">
           <button class="tab on" id="tab-results" role="tab" aria-selected="true">Results</button>
