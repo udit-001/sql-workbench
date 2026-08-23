@@ -444,16 +444,16 @@ table.grid {
   body[data-view="results"] .pane-results {
     display: block;
   }
-  body[data-view="results"] .tabs,
   body[data-view="results"] .statusbar {
     display: block;
-    display: flex;
+  }
+  /* Segments carry the active-view state on mobile — the Results/History
+     tab bar stays hidden there or navigation would be duplicated. */
+  .tabs {
+    display: none !important;
   }
   body[data-view="history"] #history-pane {
     display: block;
-  }
-  body[data-view="history"] .tabs {
-    display: flex;
   }
 }
 
