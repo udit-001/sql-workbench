@@ -1,5 +1,6 @@
 import type { Outcome, QueryOutcome } from "../bench-kit/engine";
 import type { BenchUi } from "../bench-kit/bench";
+import { explainSqlError, type ErrorContext } from "../bench-kit/error-help";
 
 /**
  * BenchUi implementation rendering outcomes into the results pane and run
@@ -16,6 +17,8 @@ export class DomUi implements BenchUi {
     runButton: HTMLButtonElement,
     results: HTMLElement,
     statusbar: HTMLElement,
+    /** Live schema snapshot for did-you-mean suggestions on SQL errors. */
+    private readonly errorContext?: () => ErrorContext,
   ) {
     this.runButton = runButton;
     this.results = results;
@@ -35,7 +38,7 @@ export class DomUi implements BenchUi {
 
   showOutcome(outcome: Outcome): void {
     this.results.replaceChildren(
-      outcome.kind === "ok" ? renderOk(outcome) : renderError(outcome.message),
+      outcome.kind === "ok" ? renderOk(outcome) : this.renderError(outcome.message),
     );
     this.setStatus(
       outcome.kind === "ok"
@@ -58,6 +61,62 @@ export class DomUi implements BenchUi {
     this.results.replaceChildren(panel);
     this.runButton.disabled = true;
     this.setStatus("Setup failed");
+  }
+  /**
+   * Friendly diagnosis first (when the error matches a known pattern);
+   * full mode keeps the verbatim message one toggle away — card mode
+   * shows the simplified view only (LEARN-211).
+   */
+  private renderError(message: string): HTMLDivElement {
+    const panel = document.createElement("div");
+    panel.className = "error-panel";
+
+    const verbatimCode = document.createElement("code");
+    verbatimCode.textContent = message;
+
+    const hint = explainSqlError(
+      message,
+      this.errorContext?.() ?? { tables: [], columns: [] },
+    );
+    if (!hint) {
+      const label = document.createElement("span");
+      label.className = "error-label";
+      label.textContent = "SQLite error";
+      panel.append(label, verbatimCode);
+      return panel;
+    }
+
+    const hintBox = document.createElement("div");
+    hintBox.className = "error-hint";
+    const title = document.createElement("div");
+    title.className = "error-hint-title";
+    title.textContent = hint.title;
+    hintBox.append(title);
+    if (hint.suggestion) {
+      const suggestion = document.createElement("div");
+      suggestion.className = "error-suggestion";
+      suggestion.textContent = hint.suggestion;
+      hintBox.append(suggestion);
+    }
+
+    const originalWrap = document.createElement("div");
+    originalWrap.className = "error-original";
+    originalWrap.hidden = true;
+    originalWrap.append(verbatimCode);
+
+    const toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.className = "error-toggle";
+    toggle.textContent = "Show original message";
+    toggle.addEventListener("click", () => {
+      const showOriginal = originalWrap.hidden;
+      originalWrap.hidden = !showOriginal;
+      hintBox.hidden = showOriginal;
+      toggle.textContent = showOriginal ? "Explain this error" : "Show original message";
+    });
+
+    panel.append(hintBox, originalWrap, toggle);
+    return panel;
   }
 }
 
@@ -126,18 +185,6 @@ function renderOk(outcome: QueryOutcome): DocumentFragment {
   table.append(head, body);
   frag.append(table);
   return frag;
-}
-
-function renderError(message: string): HTMLDivElement {
-  const panel = document.createElement("div");
-  panel.className = "error-panel";
-  const label = document.createElement("span");
-  label.className = "error-label";
-  label.textContent = "SQLite error";
-  const text = document.createElement("code");
-  text.textContent = message;
-  panel.append(label, text);
-  return panel;
 }
 
 function formatCount(n: number): string {

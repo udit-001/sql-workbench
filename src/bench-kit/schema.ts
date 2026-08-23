@@ -114,16 +114,23 @@ export function layoutTables(tables: SchemaTable[], relations: Relation[]): Diag
   function layerOf(name: string, depth = 0): number {
     const known = layers.get(name);
     if (known !== undefined) return known;
-    if (inProgress.has(name) || depth > MAX_LAYERS) return 0; // cycle guard
+    // Cycle/truncation guards return WITHOUT memoizing: a layer computed
+    // mid-cycle depends on traversal order and would poison later lookups.
+    if (inProgress.has(name) || depth > MAX_LAYERS) return 0;
     inProgress.add(name);
     let layer = 0;
+    let guarded = false;
     for (const rel of relations) {
       if (rel.from.table === name && rel.to.table !== name && byName.has(rel.to.table)) {
+        if (inProgress.has(rel.to.table) || depth + 1 > MAX_LAYERS) {
+          guarded = true; // edge into a cycle: don't cache this result
+          continue;
+        }
         layer = Math.max(layer, layerOf(rel.to.table, depth + 1) + 1);
       }
     }
     inProgress.delete(name);
-    layers.set(name, layer);
+    if (!guarded) layers.set(name, layer);
     return layer;
   }
 

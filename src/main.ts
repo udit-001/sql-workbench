@@ -54,7 +54,11 @@ window.addEventListener("message", (event) => {
 });
 
 const engine = WasmEngine.spawn();
-const ui = new DomUi($("run-btn"), $("results"), $("statusbar"));
+
+/* Live schema names for did-you-mean suggestions on SQL errors. */
+let schemaContext: { tables: string[]; columns: string[] } = { tables: [], columns: [] };
+
+const ui = new DomUi($("run-btn"), $("results"), $("statusbar"), () => schemaContext);
 const bench = new Bench(engine, ui);
 const editor = $<HTMLTextAreaElement>("editor");
 const resetButton = $<HTMLButtonElement>("reset-btn");
@@ -129,6 +133,7 @@ function insertIdentifier(identifier: string): void {
   caret = { start: newCaret, end: newCaret, len: editor.value.length };
   editor.focus();
   editor.setSelectionRange(newCaret, newCaret);
+  refreshHighlight(); // setRangeText doesn't fire input
 }
 
 const schemaPanel = new SchemaPanel($("schema-panel"), insertIdentifier, (name) => {
@@ -290,6 +295,10 @@ async function renderSchema(tables: Awaited<ReturnType<typeof loadSchema>>, data
   });
   schemaPanel.render(merged, datasetTitle);
   diagramState.tables = merged;
+  schemaContext = {
+    tables: merged.map((t) => t.name),
+    columns: merged.flatMap((t) => t.columns.map((c) => c.name)),
+  };
   diagramState.dirty = true;
   if (document.body.dataset.view === "diagram") await renderDiagramNow();
 }

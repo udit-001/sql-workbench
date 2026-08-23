@@ -47,8 +47,8 @@ function isDigit(char: string): boolean {
   return char >= "0" && char <= "9";
 }
 
-function isWordStart(char: string): string | false {
-  return /[A-Za-z_"']/.test(char) ? char : false;
+function isWordStart(char: string): boolean {
+  return /[A-Za-z_]/.test(char);
 }
 
 function isWordChar(char: string): boolean {

@@ -355,6 +355,32 @@ table.grid {
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
+.error-hint-title {
+  font-weight: 600;
+  color: var(--heading);
+  margin-bottom: 4px;
+}
+.error-suggestion {
+  color: var(--text);
+}
+.error-original code {
+  font-size: 0.75rem;
+  color: var(--muted);
+  white-space: pre-wrap;
+}
+.error-toggle {
+  margin-top: 8px;
+  font-size: 0.72rem;
+  color: var(--muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.error-toggle:hover {
+  color: var(--text);
+}
+body[data-mode="card"] .error-toggle {
+  display: none; /* cards show the simplified explanation only */
+}
 .error-panel code,
 .boot-error {
   font-family: var(--mono);
@@ -718,10 +744,8 @@ body[data-mode="card"] .editor {
   .schema,
   .pane-results,
   .statusbar,
-  .ed-tools {
-    display: none;
-  }
-  .editor {
+  .ed-tools,
+  .editor-wrap {
     display: none;
   }
   .seg {
