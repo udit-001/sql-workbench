@@ -225,11 +225,38 @@ kbd {
   border-bottom: 1px solid var(--border);
 }
 
-/* results */
-.results {
+/* results + history tabs */
+.tabs {
+  display: flex;
+  gap: 2px;
+  border-bottom: 1px solid var(--border);
+  padding: 0 10px;
+  flex: none;
+  background: var(--surface);
+}
+.tab {
+  font-size: 0.8rem;
+  padding: 7px 12px;
+  color: var(--muted);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.tab.on {
+  color: var(--strong);
+  border-bottom-color: var(--accent);
+  font-weight: 500;
+}
+.pane {
   flex: 1;
   overflow: auto;
   min-height: 0;
+  display: none;
+}
+.pane.on {
+  display: block;
+}
+.pane-results {
+  flex: 1;
 }
 table.grid {
   border-collapse: collapse;
@@ -309,16 +336,74 @@ table.grid {
   color: var(--muted);
 }
 
+/* history pane */
+.jr {
+  padding: 8px 14px;
+  font-size: 0.78rem;
+}
+.jr-tools {
+  display: flex;
+  justify-content: flex-end;
+  padding-bottom: 6px;
+}
+.jr-row {
+  display: flex;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+  align-items: baseline;
+}
+.dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.dot.ok {
+  background: var(--ok);
+}
+.dot.err {
+  background: var(--err);
+}
+.dot.reset {
+  background: transparent;
+  border: 1.5px dashed var(--muted);
+}
+.jr-sql {
+  font-family: var(--mono);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 55%;
+}
+.jr-failed {
+  color: var(--err);
+}
+.jr-meta {
+  color: var(--muted);
+  font-size: 0.72rem;
+  margin-left: auto;
+  white-space: nowrap;
+}
+.jr-note {
+  padding-top: 8px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+
 /* mobile segments (spec user story 17) */
 .seg {
   display: none;
 }
 @media (max-width: 720px) {
   .schema,
-  .editor,
-  .results,
+  .pane-results,
   .statusbar,
   .ed-tools {
+    display: none;
+  }
+  .editor {
     display: none;
   }
   .seg {
@@ -356,11 +441,19 @@ table.grid {
   body[data-view="query"] .ed-tools {
     display: flex;
   }
-  body[data-view="results"] .results {
+  body[data-view="results"] .pane-results {
     display: block;
   }
+  body[data-view="results"] .tabs,
   body[data-view="results"] .statusbar {
     display: block;
+    display: flex;
+  }
+  body[data-view="history"] #history-pane {
+    display: block;
+  }
+  body[data-view="history"] .tabs {
+    display: flex;
   }
 }
 

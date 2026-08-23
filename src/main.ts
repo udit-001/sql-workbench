@@ -1,10 +1,14 @@
 import "./styles.css";
 import { Bench } from "./bench-kit/bench";
+import { eventsToMarkdown } from "./bench-kit/export-markdown";
 import { fetchFixture } from "./bench-kit/fixture";
+import type { Outcome } from "./bench-kit/engine";
+import { openJournal } from "./bench-kit/journal-idb";
 import { loadSchema } from "./bench-kit/schema";
 import { WasmEngine } from "./bench-kit/wasm/wasm-engine";
 import { DEMO_DATASET } from "./demo-dataset";
 import { DomUi } from "./ui/dom-ui";
+import { HistoryTab } from "./ui/history-tab";
 import { SchemaPanel } from "./ui/schema-panel";
 
 const $ = <T extends HTMLElement>(id: string): T => {
@@ -40,8 +44,28 @@ const schemaPanel = new SchemaPanel($("schema-panel"), (column) => {
   editor.focus();
 });
 
+/* --- Journal + History (LEARN-203) ---------------------------------- */
+
+const journal = await openJournal();
+const history = new HistoryTab($("history-list"), $("history-count"), $("history-empty"));
+
+let currentFixtureId = DEMO_DATASET.title; // journal events carry the dataset id
+
+async function recordQuery(sql: string, outcome: Outcome): Promise<void> {
+  const base = { id: crypto.randomUUID(), ts: Date.now(), fixture: currentFixtureId };
+  await journal.append(
+    outcome.kind === "ok"
+      ? { ...base, type: "query", sql, ok: true, rows: outcome.rowCount, ms: outcome.ms }
+      : { ...base, type: "query", sql, ok: false, error: outcome.message },
+  );
+  await history.refresh(await journal.list());
+}
+
 async function runCurrentQuery(): Promise<void> {
-  await bench.submit(editor.value);
+  const sql = editor.value.trim();
+  const outcome = await bench.submit(editor.value);
+  // Blank queries are a no-op; real runs land in the journal immediately.
+  if (outcome) await recordQuery(sql, outcome);
 }
 
 $("run-btn").addEventListener("click", () => void runCurrentQuery());
@@ -52,17 +76,49 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
-/* Mobile view switcher (spec user story 17). */
-for (const button of document.querySelectorAll<HTMLButtonElement>("[data-seg]")) {
-  button.addEventListener("click", () => {
-    document.body.dataset.view = button.dataset.seg ?? "query";
-    for (const other of document.querySelectorAll("[data-seg]")) {
-      other.classList.toggle("on", other === button);
-    }
-  });
+/* Tabs (desktop) + segments (mobile) switch views together. */
+function selectView(view: string, active: Element): void {
+  document.body.dataset.view = view;
+  const isHistory = view === "history";
+  const isResults = view === "results";
+  $("tab-results").classList.toggle("on", !isHistory);
+  $("tab-history").classList.toggle("on", isHistory);
+  $("tab-results").setAttribute("aria-selected", String(!isHistory));
+  $("tab-history").setAttribute("aria-selected", String(isHistory));
+  $("results").classList.toggle("on", isResults);
+  $("history-pane").classList.toggle("on", isHistory);
+  for (const other of document.querySelectorAll("[data-seg]")) {
+    other.classList.toggle("on", other === active);
+  }
 }
+for (const button of document.querySelectorAll<HTMLButtonElement>("[data-seg]")) {
+  button.addEventListener("click", () => selectView(button.dataset.seg ?? "query", button));
+}
+$("tab-results").addEventListener("click", (e) => {
+  const seg = document.querySelector('[data-seg="results"]');
+  selectView("results", seg ?? e.currentTarget as Element);
+});
+$("tab-history").addEventListener("click", (e) => {
+  const seg = document.querySelector('[data-seg="history"]');
+  selectView("history", seg ?? e.currentTarget as Element);
+});
 
-/* Boot: decide the dataset (?fixture= or built-in demo), seed, introspect. */
+/* Export Markdown — chat-paste-ready practice log. */
+$("export-btn").addEventListener("click", () => {
+  void (async () => {
+    const markdown = eventsToMarkdown(await journal.list());
+    const blob = new Blob([markdown], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `sql-practice-${new Date().toISOString().slice(0, 10)}.md`;
+    link.click();
+    URL.revokeObjectURL(url);
+  })();
+});
+
+/* --- Boot: decide the dataset (?fixture= or built-in demo), seed, introspect */
+
 let seedStatements: string[] = DEMO_DATASET.statements;
 
 async function refreshSchema(datasetTitle: string): Promise<void> {
@@ -77,6 +133,7 @@ try {
   if (requestedId) {
     const fixture = await fetchFixture(requestedId); // throws plain-language FixtureError
     seedStatements = [fixture.sql];
+    currentFixtureId = requestedId;
     datasetTitle = fixture.title;
     starterQuery = ""; // filled from the loaded schema below
   }
@@ -93,6 +150,7 @@ try {
   const chip = $("dataset-chip");
   chip.textContent = `${datasetTitle} · sample data`;
   chip.hidden = false;
+  await history.refresh(await journal.list());
   editor.focus();
 } catch (err) {
   // Malformed/missing fixtures fail loud: console + visible panel.
@@ -107,6 +165,13 @@ resetButton.addEventListener("click", () => {
     try {
       await engine.load(seedStatements);
       await refreshSchema(currentDatasetTitle());
+      await journal.append({
+        id: crypto.randomUUID(),
+        type: "dataset-reset",
+        ts: Date.now(),
+        fixture: currentFixtureId,
+      });
+      await history.refresh(await journal.list());
       ui.setStatus("Sample data restored");
     } catch (err) {
       console.error("[sql-workbench] reset failed", err);

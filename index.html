@@ -34,6 +34,7 @@
       <button type="button" data-seg="schema">Schema</button>
       <button type="button" data-seg="query" class="on">Query</button>
       <button type="button" data-seg="results">Results</button>
+      <button type="button" data-seg="history">History</button>
     </nav>
 
     <div class="shell">
@@ -55,7 +56,21 @@
           placeholder="Type SQL, then press Ctrl+Enter…"
         ></textarea>
 
-        <section id="results" class="results" aria-live="polite" aria-label="Query results"></section>
+        <div class="tabs" role="tablist">
+          <button class="tab on" id="tab-results" role="tab" aria-selected="true">Results</button>
+          <button class="tab" id="tab-history" role="tab" aria-selected="false">History <span id="history-count"></span></button>
+        </div>
+
+        <section id="results" class="pane on pane-results" aria-live="polite" aria-label="Query results"></section>
+
+        <section id="history-pane" class="pane jr" aria-label="Run history">
+          <div class="jr-tools">
+            <button class="ghost" id="export-btn" title="Download your runs as Markdown — paste it into any chat">↓ Export Markdown</button>
+          </div>
+          <div id="history-list"></div>
+          <div class="jr-note" id="history-empty">No runs yet — press Ctrl+Enter to run a query.</div>
+          <div class="jr-note">Runs stay on this device. Studying through Pharos? Your agent reads this history to shape your next lesson.</div>
+        </section>
 
         <footer class="statusbar" id="statusbar">Ready</footer>
       </section>
