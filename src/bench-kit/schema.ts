@@ -10,6 +10,9 @@ export interface SchemaTable {
   name: string;
   rowCount: number;
   columns: SchemaColumn[];
+ /** Set by the app layer: learner-imported CSV tables get a badge + ✕. */
+  yours?: boolean;
+  yoursTitle?: string;
 }
 
 /**

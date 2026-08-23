@@ -392,6 +392,161 @@ table.grid {
   line-height: 1.5;
 }
 
+/* schema panel — imported tables */
+.badge-you {
+  font-size: 0.62rem;
+  color: var(--accent);
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  padding: 0 4px;
+}
+.col-del {
+  visibility: hidden;
+  color: var(--err);
+  cursor: pointer;
+  margin-left: 6px;
+  padding: 0 2px;
+}
+.tbl:hover .col-del,
+.tbl.open .col-del {
+  visibility: visible;
+}
+
+/* import modal */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+.overlay.on {
+  display: flex;
+}
+.modal {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  width: min(520px, 92vw);
+  max-height: 86vh;
+  display: flex;
+  flex-direction: column;
+  font-size: 0.85rem;
+}
+.modal header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+  color: var(--heading);
+}
+.modal .body {
+  padding: 14px 16px;
+  overflow: auto;
+}
+.modal footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.filemeta {
+  color: var(--muted);
+  font-size: 0.78rem;
+  margin-bottom: 10px;
+}
+.preview-wrap {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: auto;
+  margin-bottom: 14px;
+  max-height: 200px;
+}
+table.preview-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.76rem;
+}
+.preview-table th {
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  color: var(--strong);
+  text-align: left;
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--divider);
+  font-family: var(--mono);
+  white-space: nowrap;
+}
+.preview-table td {
+  padding: 4px 10px;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--mono);
+  white-space: nowrap;
+}
+.frow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.frow label {
+  font-size: 0.8rem;
+  color: var(--strong);
+  min-width: 88px;
+}
+.frow input[type="text"] {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  color: var(--heading);
+  font-family: var(--mono);
+  font-size: 0.8rem;
+}
+.frow select {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 8px;
+  color: var(--text);
+}
+.frow .chk {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--text);
+  min-width: 0;
+}
+.drop-hint {
+  font-size: 0.72rem;
+  color: var(--muted);
+  margin-top: 10px;
+  text-align: center;
+}
+body.dragging::after {
+  content: "Drop your CSV to import it";
+  position: fixed;
+  inset: 10px;
+  border: 2px dashed var(--accent);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--bg) 80%, transparent);
+  z-index: 60;
+  pointer-events: none;
+}
+
 /* mobile segments (spec user story 17) */
 .seg {
   display: none;

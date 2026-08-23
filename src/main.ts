@@ -1,5 +1,7 @@
 import "./styles.css";
 import { Bench } from "./bench-kit/bench";
+import { buildImportScript, parseCsv } from "./bench-kit/csv";
+import { deleteImportedTable, listImportedTables, saveImportedTable, type ImportedTable } from "./bench-kit/csv-store";
 import { eventsToMarkdown } from "./bench-kit/export-markdown";
 import { fetchFixture } from "./bench-kit/fixture";
 import type { Outcome } from "./bench-kit/engine";
@@ -10,6 +12,7 @@ import { WasmEngine } from "./bench-kit/wasm/wasm-engine";
 import { DEMO_DATASET } from "./demo-dataset";
 import { DomUi } from "./ui/dom-ui";
 import { HistoryTab } from "./ui/history-tab";
+import { ImportModal, type ImportSelection } from "./ui/import-modal";
 import { SchemaPanel } from "./ui/schema-panel";
 
 const $ = <T extends HTMLElement>(id: string): T => {
@@ -84,7 +87,9 @@ function insertIdentifier(identifier: string): void {
   editor.setSelectionRange(newCaret, newCaret);
 }
 
-const schemaPanel = new SchemaPanel($("schema-panel"), insertIdentifier);
+const schemaPanel = new SchemaPanel($("schema-panel"), insertIdentifier, (name) => {
+  void removeImportedTable(name);
+});
 
 /* --- Journal + History (LEARN-203) ---------------------------------- */
 
@@ -172,8 +177,43 @@ $("export-btn").addEventListener("click", () => {
 
 /* --- Boot: decide the dataset (?fixture= or built-in demo), seed, introspect */
 
+/**
+ * Re-run every persisted CSV import against the current database. Called
+ * after seeding on boot and on Reset — imported tables are the learner's
+ * own data, so they survive both.
+ */
+async function replayImports(): Promise<void> {
+  for (const table of await listImportedTables()) {
+    const outcome = await engine.run(
+      buildImportScript(table.name, parseCsv(table.csvText, {
+        delimiter: table.delimiter,
+        hasHeader: table.hasHeader,
+      })),
+    );
+    if (outcome.kind === "error") {
+      // A replay failure must not take the bench down; say why it's gone.
+      console.error(`[sql-workbench] could not restore imported table "${table.name}": ${outcome.message}`);
+      await deleteImportedTable(table.name);
+    }
+  }
+}
+
 async function refreshSchema(datasetTitle: string): Promise<void> {
-  schemaPanel.render(await loadSchema(engine), datasetTitle);
+  renderSchema(await loadSchema(engine), datasetTitle);
+}
+
+/** Render with "yours" badges merged onto learner-imported tables. */
+async function renderSchema(tables: Awaited<ReturnType<typeof loadSchema>>, datasetTitle: string): Promise<void> {
+  const mine = new Map((await listImportedTables()).map((t) => [t.name, t]));
+  schemaPanel.render(
+    tables.map((table) => {
+      const record = mine.get(table.name);
+      return record
+        ? { ...table, yours: true, yoursTitle: `${record.filename} · saved in this browser` }
+        : table;
+    }),
+    datasetTitle,
+  );
 }
 
 try {
@@ -187,8 +227,9 @@ try {
   }
 
   await engine.load(currentDataset.seedStatements);
+  await replayImports();
   const tables = await loadSchema(engine);
-  schemaPanel.render(tables, currentDataset.title);
+  await renderSchema(tables, currentDataset.title);
 
   if (!starterQuery && tables[0]) {
     starterQuery = `SELECT *\nFROM ${tables[0].name}\nLIMIT 10;`;
@@ -212,6 +253,7 @@ resetButton.addEventListener("click", () => {
     resetButton.disabled = true;
     try {
       await engine.load(currentDataset.seedStatements);
+      await replayImports();
       await refreshSchema(currentDataset.title);
       await recordEvent({
         id: crypto.randomUUID(),
@@ -228,3 +270,107 @@ resetButton.addEventListener("click", () => {
     }
   })();
 });
+
+/* --- Import CSV (LEARN-204) ----------------------------------------- */
+
+const MAX_CSV_BYTES = 50 * 1024 * 1024; // matches the Pharos-side dataset cap
+
+const importModal = new ImportModal({
+  overlay: $("import-overlay"),
+  fileMeta: $("import-filemeta"),
+  preview: $("import-preview"),
+  nameInput: $<HTMLInputElement>("import-name"),
+  delimiterSelect: $<HTMLSelectElement>("import-delimiter"),
+  headerCheckbox: $<HTMLInputElement>("import-header"),
+  importButton: $<HTMLButtonElement>("import-go"),
+  cancelButton: $<HTMLButtonElement>("import-cancel"),
+  errorBox: $("import-error"),
+});
+
+async function executeImport(filename: string, selection: ImportSelection): Promise<void> {
+  const outcome = await engine.run(selection.script);
+  if (outcome.kind === "error") throw new Error(outcome.message); // shown in the modal
+
+  const record: ImportedTable = {
+    name: selection.tableName,
+    filename,
+    csvText: selection.csvText,
+    delimiter: selection.delimiter,
+    hasHeader: selection.hasHeader,
+    rows: selection.rows,
+    importedAt: Date.now(),
+  };
+  await saveImportedTable(record);
+  await recordEvent({
+    id: crypto.randomUUID(),
+    type: "csv-import",
+    ts: Date.now(),
+    name: selection.tableName,
+    rows: selection.rows,
+  });
+  await refreshSchema(currentDataset.title);
+
+  editor.value = `SELECT *\nFROM ${selection.tableName}\nLIMIT 10;`;
+  caret = null;
+  ui.setStatus(
+    `Imported ${selection.rows.toLocaleString("en-US")} rows into ${selection.tableName}`,
+  );
+  selectView("results", document.querySelector('[data-seg="results"]') ?? document.body);
+  importModal.close();
+}
+
+async function openCsvFile(file: File): Promise<void> {
+  if (file.size > MAX_CSV_BYTES) {
+    ui.setStatus("CSV too large — the bench caps imports at 50 MB");
+    return;
+  }
+  importModal.onExecute((selection) => executeImport(file.name, selection));
+  await importModal.openFor(file.name, await file.text());
+}
+
+$("import-btn").addEventListener("click", () => {
+  const picker = document.createElement("input");
+  picker.type = "file";
+  picker.accept = ".csv,text/csv,text/plain";
+  picker.addEventListener("change", () => {
+    const file = picker.files?.[0];
+    if (file) void openCsvFile(file);
+  });
+  picker.click();
+});
+
+/* Drop a .csv anywhere on the bench. */
+let dragDepth = 0;
+window.addEventListener("dragenter", (event) => {
+  event.preventDefault();
+  dragDepth++;
+  document.body.classList.add("dragging");
+});
+window.addEventListener("dragleave", () => {
+  if (--dragDepth <= 0) {
+    dragDepth = 0;
+    document.body.classList.remove("dragging");
+  }
+});
+window.addEventListener("dragover", (event) => event.preventDefault());
+window.addEventListener("drop", (event) => {
+  event.preventDefault();
+  dragDepth = 0;
+  document.body.classList.remove("dragging");
+  const file = event.dataTransfer?.files?.[0];
+  if (file) void openCsvFile(file);
+});
+
+/* ✕ on a "yours" table removes it and its stored bytes. */
+async function removeImportedTable(name: string): Promise<void> {
+  if (!confirm(`Remove table "${name}"? Its saved CSV will be deleted too.`)) return;
+  const outcome = await engine.run(`DROP TABLE IF EXISTS "${name}";`);
+  if (outcome.kind === "error") {
+    console.error("[sql-workbench] drop failed", outcome.message);
+    ui.setStatus(`Could not remove ${name} — see console`);
+    return;
+  }
+  await deleteImportedTable(name);
+  await refreshSchema(currentDataset.title);
+  ui.setStatus(`Removed ${name}`);
+}

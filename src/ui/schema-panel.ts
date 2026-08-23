@@ -8,6 +8,7 @@ export class SchemaPanel {
   constructor(
     private readonly container: HTMLElement,
     private readonly onInsertColumn: (column: string) => void,
+    private readonly onRemoveTable?: (table: string) => void,
   ) {}
 
   render(tables: SchemaTable[], datasetTitle: string): void {
@@ -37,12 +38,30 @@ export class SchemaPanel {
       chev.textContent = "▶";
       const name = document.createElement("span");
       name.textContent = table.name;
+      if (table.yours) {
+        name.title = table.yoursTitle ?? "Imported from your CSV — saved in this browser";
+        const badge = document.createElement("span");
+        badge.className = "badge-you";
+        badge.textContent = "yours";
+        header.append(chev, name, badge);
+        const remove = document.createElement("span");
+        remove.className = "col-del";
+        remove.textContent = "✕";
+        remove.title = `Remove ${table.name} and its stored CSV`;
+        remove.addEventListener("click", (event) => {
+          event.stopPropagation();
+          this.onRemoveTable?.(table.name);
+        });
+        header.append(remove);
+      } else {
+        header.append(chev, name);
+      }
       const count = document.createElement("span");
       count.className = "ty";
       count.title = "rows in table";
-      count.style.marginLeft = "auto";
+      count.style.marginLeft = table.yours ? "auto" : "auto";
       count.textContent = table.rowCount.toLocaleString("en-US");
-      header.append(chev, name, count);
+      header.append(count);
       header.addEventListener("click", () => block.classList.toggle("open"));
 
       const cols = document.createElement("div");
