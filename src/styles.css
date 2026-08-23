@@ -547,6 +547,46 @@ body.dragging::after {
   pointer-events: none;
 }
 
+/* card mode (LEARN-205) — embedded drill per approved bench-drill.html:
+   no chrome at all (the lesson page names the dataset); one slim control
+   bar with Reset + Run, compact editor, results scroll inside a
+   fixed-height iframe. Schema, history, import, theme toggle, segments
+   and statusbar stay out of the card. */
+body[data-mode="card"] {
+  font-size: 14px;
+}
+body[data-mode="card"] .top,
+body[data-mode="card"] .schema,
+body[data-mode="card"] .seg,
+body[data-mode="card"] .tabs,
+body[data-mode="card"] .statusbar,
+body[data-mode="card"] .kbd-hint {
+  display: none !important;
+}
+body[data-mode="card"] .ed-tools {
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--border);
+}
+/* Reset sits left of Run, matching the drill prototype's mini buttons */
+body[data-mode="card"] #reset-btn {
+  order: -1;
+  font-size: 0.74rem;
+  padding: 3px 8px;
+}
+body[data-mode="card"] #run-btn {
+  font-size: 0.78rem;
+  padding: 4px 13px;
+}
+body[data-mode="card"] .editor {
+  height: auto;
+  min-height: 88px;
+  max-height: 40vh;
+  resize: none;
+  flex: none;
+  font-size: 0.83rem;
+  line-height: 1.6;
+}
+
 /* mobile segments (spec user story 17) */
 .seg {
   display: none;

@@ -8,6 +8,7 @@ import type { Outcome } from "./bench-kit/engine";
 import { openJournal } from "./bench-kit/journal-idb";
 import type { WorkbenchEvent } from "./bench-kit/journal";
 import { loadSchema } from "./bench-kit/schema";
+import { themeFromMessage } from "./bench-kit/theme";
 import { WasmEngine } from "./bench-kit/wasm/wasm-engine";
 import { DEMO_DATASET } from "./demo-dataset";
 import { DomUi } from "./ui/dom-ui";
@@ -35,6 +36,20 @@ $("theme-toggle").addEventListener("click", () => {
       ?.platform ?? navigator.platform;
   if (/Mac|iPhone|iPad/i.test(platform)) $("modkey").textContent = "⌘";
 }
+
+/* Card mode (LEARN-205): embedded drill variant — chrome hides via CSS,
+   theme arrives live from the parent lesson page. Full mode is unchanged. */
+const isCardMode = new URLSearchParams(location.search).get("mode") === "card";
+if (isCardMode) document.body.dataset.mode = "card";
+
+/* Theme relay — the ONE message the embed contract allows. Works in every
+   mode so a bench framed inside Pharos follows the dashboard too. */
+window.addEventListener("message", (event) => {
+  const theme = themeFromMessage(event.data);
+  if (!theme) return;
+  document.documentElement.dataset.theme = theme;
+  localStorage.setItem("pharos_theme", theme);
+});
 
 const engine = WasmEngine.spawn();
 const ui = new DomUi($("run-btn"), $("results"), $("statusbar"));
