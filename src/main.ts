@@ -37,12 +37,53 @@ const ui = new DomUi($("run-btn"), $("results"), $("statusbar"));
 const bench = new Bench(engine, ui);
 const editor = $<HTMLTextAreaElement>("editor");
 const resetButton = $<HTMLButtonElement>("reset-btn");
-const schemaPanel = new SchemaPanel($("schema-panel"), (column) => {
-  const start = editor.selectionStart ?? editor.value.length;
-  const end = editor.selectionEnd ?? start;
-  editor.setRangeText(column, start, end, "end");
+
+/* Track the editor caret so schema-panel clicks insert where the learner
+   was looking — not wherever the textarea's stale focus state points.
+   The tracked offsets carry the value length they were seen at: if the
+   value has since changed programmatically (boot/reset), they are stale
+   and we fall back to appending at the end. */
+let caret: { start: number; end: number; len: number } | null = null;
+function rememberCaret(): void {
+  if (document.activeElement === editor) {
+    caret = {
+      start: editor.selectionStart ?? 0,
+      end: editor.selectionEnd ?? 0,
+      len: editor.value.length,
+    };
+  }
+}
+for (const event of ["keyup", "mouseup", "touchend", "input", "focus"] as const) {
+  editor.addEventListener(event, rememberCaret);
+}
+
+/**
+ * Insert an identifier at the remembered caret (default: append), keeping
+ * it from gluing onto neighbouring tokens: "SELECT⎮FROM" + region →
+ * "SELECT region FROM". Focus returns to the editor with the caret just
+ * after the inserted name so typing continues seamlessly.
+ */
+function insertIdentifier(identifier: string): void {
+  const value = editor.value;
+  const tracked = caret && caret.len === value.length ? caret : null;
+  const { start, end } = tracked ?? { start: value.length, end: value.length };
+  const charBefore = value[start - 1] ?? "";
+  const charAfter = value[end] ?? "";
+  // Pad so the identifier never glues onto neighbouring tokens:
+  // "SELECT|FROM" + region → "SELECT region FROM", but "o.|region" stays
+  // "o.region" and trailing spaces/commas are left alone.
+  const padBefore = /[\w"'\]);]/.test(charBefore) ? " " : "";
+  const padAfter = /[\w"']/.test(charAfter) ? " " : "";
+
+  const inserted = `${padBefore}${identifier}${padAfter}`;
+  editor.setRangeText(inserted, start, end, "end");
+  const newCaret = start + inserted.length;
+  caret = { start: newCaret, end: newCaret, len: editor.value.length };
   editor.focus();
-});
+  editor.setSelectionRange(newCaret, newCaret);
+}
+
+const schemaPanel = new SchemaPanel($("schema-panel"), insertIdentifier);
 
 /* --- Journal + History (LEARN-203) ---------------------------------- */
 
