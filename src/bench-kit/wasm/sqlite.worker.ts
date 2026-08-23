@@ -24,11 +24,11 @@ interface DbLike {
 }
 
 type Sqlite3Static = { oo1: { DB: new (options: { filename: string; flags: string }) => DbLike } };
-type Sqlite3Factory = () => Promise<Sqlite3Static>;
+type Sqlite3Init = () => Promise<Sqlite3Static>;
 
 // The module ships its own types; this structural view keeps the worker
 // logic honest about exactly the API surface we rely on.
-const initSqlite3 = sqlite3InitModule as unknown as Sqlite3Factory;
+const initSqlite3 = sqlite3InitModule as unknown as Sqlite3Init;
 
 let dbPromise: Promise<Sqlite3Static> | null = null;
 
@@ -40,31 +40,32 @@ function sqlite3(): Promise<Sqlite3Static> {
 
 let db: DbLike | null = null;
 
-async function conn(): Promise<DbLike> {
-  if (!db) {
-    const { oo1 } = await sqlite3();
-    db = new oo1.DB({ filename: ":memory:", flags: "c" });
-  }
+function newMemoryDb(sqlite3Static: Sqlite3Static): DbLike {
+  return new sqlite3Static.oo1.DB({ filename: ":memory:", flags: "c" });
+}
+
+async function getDb(): Promise<DbLike> {
+  if (!db) db = newMemoryDb(await sqlite3());
   return db;
 }
 
 /** Recreate the memory DB and execute every seed statement, in order. */
 async function load(statements: string[]): Promise<void> {
-  const { oo1 } = await sqlite3();
+  const sqlite3Static = await sqlite3();
   db?.close();
-  db = new oo1.DB({ filename: ":memory:", flags: "c" });
+  db = newMemoryDb(sqlite3Static);
   for (const statement of statements) {
     db.exec({ sql: statement, rowMode: "array" });
   }
 }
 
 async function run(sql: string): Promise<Outcome> {
-  const conn_ = await conn();
+  const database = await getDb();
   const t0 = performance.now();
   const columns: string[] = [];
   const collected: SqlValue[][] = [];
   try {
-    conn_.exec({
+    database.exec({
       sql,
       rowMode: "array",
       columnNames: columns,

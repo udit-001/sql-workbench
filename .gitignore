@@ -2,3 +2,5 @@ node_modules/
 dist/
 *.local
 .playwright-mcp/
+.pi/
+*.png
