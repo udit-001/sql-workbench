@@ -152,3 +152,12 @@ Open `/tmp/diagram-design/skills/diagram-design/assets/example-db-schema.html` �
   "manualNotes": ""
 }
 ```
+
+---
+
+## Application to the bench (LEARN-209)
+
+- Structure/anatomy/stroke rules ported verbatim; colors resolve through Nord CSS vars instead of the repo's paper/ink palette.
+- Google Fonts (Instrument Serif/Geist) intentionally NOT loaded — the offline-first precache rule (LEARN-194) forbids network font fetches; system Inter/mono stacks stand in.
+- Edge labels ("ON DELETE …") deferred: our seed fixtures don't declare referential actions; revisit if fixtures grow them.
+- Renderer is lazy (draws on first tab activation): SVG text measurement returns 0 inside display:none panes.
