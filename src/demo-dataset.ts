@@ -1,5 +1,5 @@
 /**
- * Built-in sample data shown until LEARN-202 adds fixture loading.
+ * Built-in sample data shown when no ?fixture= dataset is loaded.
  * Deliberately tiny, hand-written, and fully joinable so every query result
  * is checkable by eye. `shipped_at` NULLs exist so NULL rendering has a
  * real case to prove.

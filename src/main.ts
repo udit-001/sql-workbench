@@ -4,6 +4,7 @@ import { eventsToMarkdown } from "./bench-kit/export-markdown";
 import { fetchFixture } from "./bench-kit/fixture";
 import type { Outcome } from "./bench-kit/engine";
 import { openJournal } from "./bench-kit/journal-idb";
+import type { WorkbenchEvent } from "./bench-kit/journal";
 import { loadSchema } from "./bench-kit/schema";
 import { WasmEngine } from "./bench-kit/wasm/wasm-engine";
 import { DEMO_DATASET } from "./demo-dataset";
@@ -90,16 +91,27 @@ const schemaPanel = new SchemaPanel($("schema-panel"), insertIdentifier);
 const journal = await openJournal();
 const history = new HistoryTab($("history-list"), $("history-count"), $("history-empty"));
 
-let currentFixtureId = DEMO_DATASET.title; // journal events carry the dataset id
+/* The one place "which dataset is loaded" lives: slug id for journal
+   events, display title, and the statements Reset re-executes. */
+let currentDataset: { id: string; title: string; seedStatements: string[] } = {
+  id: DEMO_DATASET.title,
+  title: DEMO_DATASET.title,
+  seedStatements: DEMO_DATASET.statements,
+};
+
+/** Journal an event, then bring the History tab back in sync. */
+async function recordEvent(event: WorkbenchEvent): Promise<void> {
+  await journal.append(event);
+  await history.refresh(await journal.list());
+}
 
 async function recordQuery(sql: string, outcome: Outcome): Promise<void> {
-  const base = { id: crypto.randomUUID(), ts: Date.now(), fixture: currentFixtureId };
-  await journal.append(
+  const base = { id: crypto.randomUUID(), ts: Date.now(), fixture: currentDataset.id };
+  await recordEvent(
     outcome.kind === "ok"
       ? { ...base, type: "query", sql, ok: true, rows: outcome.rowCount, ms: outcome.ms }
       : { ...base, type: "query", sql, ok: false, error: outcome.message },
   );
-  await history.refresh(await journal.list());
 }
 
 async function runCurrentQuery(): Promise<void> {
@@ -160,28 +172,23 @@ $("export-btn").addEventListener("click", () => {
 
 /* --- Boot: decide the dataset (?fixture= or built-in demo), seed, introspect */
 
-let seedStatements: string[] = DEMO_DATASET.statements;
-
 async function refreshSchema(datasetTitle: string): Promise<void> {
   schemaPanel.render(await loadSchema(engine), datasetTitle);
 }
 
 try {
   const requestedId = new URLSearchParams(location.search).get("fixture");
-  let datasetTitle = DEMO_DATASET.title;
   let starterQuery = DEMO_DATASET.sampleQuery;
 
   if (requestedId) {
     const fixture = await fetchFixture(requestedId); // throws plain-language FixtureError
-    seedStatements = [fixture.sql];
-    currentFixtureId = requestedId;
-    datasetTitle = fixture.title;
+    currentDataset = { id: requestedId, title: fixture.title, seedStatements: [fixture.sql] };
     starterQuery = ""; // filled from the loaded schema below
   }
 
-  await engine.load(seedStatements);
+  await engine.load(currentDataset.seedStatements);
   const tables = await loadSchema(engine);
-  schemaPanel.render(tables, datasetTitle);
+  schemaPanel.render(tables, currentDataset.title);
 
   if (!starterQuery && tables[0]) {
     starterQuery = `SELECT *\nFROM ${tables[0].name}\nLIMIT 10;`;
@@ -189,7 +196,7 @@ try {
   editor.value = starterQuery;
 
   const chip = $("dataset-chip");
-  chip.textContent = `${datasetTitle} · sample data`;
+  chip.textContent = `${currentDataset.title} · sample data`;
   chip.hidden = false;
   await history.refresh(await journal.list());
   editor.focus();
@@ -204,15 +211,14 @@ resetButton.addEventListener("click", () => {
   void (async () => {
     resetButton.disabled = true;
     try {
-      await engine.load(seedStatements);
-      await refreshSchema(currentDatasetTitle());
-      await journal.append({
+      await engine.load(currentDataset.seedStatements);
+      await refreshSchema(currentDataset.title);
+      await recordEvent({
         id: crypto.randomUUID(),
         type: "dataset-reset",
         ts: Date.now(),
-        fixture: currentFixtureId,
+        fixture: currentDataset.id,
       });
-      await history.refresh(await journal.list());
       ui.setStatus("Sample data restored");
     } catch (err) {
       console.error("[sql-workbench] reset failed", err);
@@ -222,7 +228,3 @@ resetButton.addEventListener("click", () => {
     }
   })();
 });
-
-function currentDatasetTitle(): string {
-  return $("dataset-chip").textContent?.replace(/ · sample data$/, "") ?? "sample data";
-}
