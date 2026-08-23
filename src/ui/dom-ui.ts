@@ -2,67 +2,93 @@ import type { Outcome, QueryOutcome } from "../bench-kit/engine";
 import type { BenchUi } from "../bench-kit/bench";
 
 /**
- * BenchUi implementation rendering outcomes into the results pane.
- * Values reach the DOM via textContent only — SQL output is never parsed
- * as HTML. NULL is rendered visibly distinct from empty string (spec user
- * story 7).
+ * BenchUi implementation rendering outcomes into the results pane and run
+ * stats into the bottom statusbar. Values reach the DOM via textContent
+ * only — SQL output is never parsed as HTML. NULL is rendered visibly
+ * distinct from empty string (spec user story 7).
  */
 export class DomUi implements BenchUi {
   private readonly runButton: HTMLButtonElement;
   private readonly results: HTMLElement;
+  private readonly statusbar: HTMLElement;
 
   constructor(
     runButton: HTMLButtonElement,
     results: HTMLElement,
+    statusbar: HTMLElement,
   ) {
     this.runButton = runButton;
     this.results = results;
+    this.statusbar = statusbar;
   }
 
   setRunning(running: boolean): void {
     this.runButton.disabled = running;
     this.runButton.textContent = running ? "Running…" : "▸ Run query";
-    if (running) this.results.setAttribute("aria-busy", "true");
-    else this.results.removeAttribute("aria-busy");
+    if (running) {
+      this.results.setAttribute("aria-busy", "true");
+      this.setStatus("Running…");
+    } else {
+      this.results.removeAttribute("aria-busy");
+    }
   }
 
   showOutcome(outcome: Outcome): void {
     this.results.replaceChildren(
       outcome.kind === "ok" ? renderOk(outcome) : renderError(outcome.message),
     );
+    this.setStatus(
+      outcome.kind === "ok"
+        ? describeOk(outcome)
+        : "Query failed — see the message above",
+    );
   }
 
-  /** Infrastructural failure (worker/WASM) — not a learner SQL error. */
+  /** Infrastructural messages that aren't tied to a query run. */
+  setStatus(text: string): void {
+    this.statusbar.textContent = text;
+  }
+
+  /** Infrastructural failure (worker/WASM/fixture) — not a learner SQL error. */
   showBootError(message: string): void {
     const panel = document.createElement("div");
     panel.className = "boot-error";
     panel.textContent =
-      `The SQL engine failed to start: ${message} — check the console, then reload.`;
+      `${message} — check the console for details, then reload.`;
     this.results.replaceChildren(panel);
     this.runButton.disabled = true;
+    this.setStatus("Setup failed");
   }
+}
+
+function describeOk(outcome: QueryOutcome): string {
+  const parts = [
+    `${formatCount(outcome.rowCount)} row${outcome.rowCount === 1 ? "" : "s"}`,
+    `${outcome.ms} ms`,
+  ];
+  parts.push(
+    outcome.truncated
+      ? `showing first ${formatCount(outcome.rows.length)}`
+      : "showing all",
+  );
+  if (!outcome.truncated && outcome.rows.length === 0 && outcome.columns.length > 0) {
+    parts.splice(2, 0, "no matching rows");
+  } else if (!outcome.truncated && outcome.rows.length === 0 && outcome.columns.length === 0) {
+    parts.push("statement executed");
+  }
+  return parts.join(" · ");
 }
 
 function renderOk(outcome: QueryOutcome): DocumentFragment {
   const frag = document.createDocumentFragment();
-
-  const meta = document.createElement("div");
-  meta.className = "result-meta";
-  meta.append(
-    `${formatCount(outcome.rowCount)} row${outcome.rowCount === 1 ? "" : "s"}`,
-    ` · ${outcome.ms} ms`,
-  );
-  if (outcome.truncated) {
-    meta.append(` · showing first ${formatCount(outcome.rows.length)}`);
+  if (outcome.columns.length === 0) {
+    const note = document.createElement("div");
+    note.className = "schema-empty";
+    note.style.padding = "14px 16px";
+    note.textContent = "Statement executed — no rows to show.";
+    frag.append(note);
+    return frag;
   }
-
-  if (!outcome.truncated && outcome.rows.length === 0) {
-    meta.append(outcome.columns.length === 0 ? " · statement executed" : " · no matching rows");
-  }
-
-  frag.append(meta);
-
-  if (outcome.columns.length === 0) return frag; // non-SELECT statement
 
   const table = document.createElement("table");
   table.className = "grid";

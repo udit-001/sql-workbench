@@ -21,7 +21,7 @@
     </script>
     <script type="module" src="/src/main.ts"></script>
   </head>
-  <body>
+  <body data-view="query">
     <header class="top">
       <span class="name">sql-workbench</span>
       <span class="chip" id="dataset-chip" hidden></span>
@@ -29,20 +29,36 @@
       <button class="iconbtn" id="theme-toggle" aria-label="Toggle light or dark theme" title="Theme">◐</button>
     </header>
 
-    <div class="ed-tools">
-      <button class="run" id="run-btn">▸ Run query</button>
-      <span class="spacer"></span>
-      <span class="kbd-hint"><kbd id="modkey">Ctrl</kbd>+<kbd>Enter</kbd> to run</span>
+    <!-- Mobile-only view switcher (spec user story 17) -->
+    <nav class="seg" aria-label="Bench sections">
+      <button type="button" data-seg="schema">Schema</button>
+      <button type="button" data-seg="query" class="on">Query</button>
+      <button type="button" data-seg="results">Results</button>
+    </nav>
+
+    <div class="shell">
+      <aside class="schema" id="schema-panel" aria-label="Tables in this sample dataset"></aside>
+
+      <section class="main">
+        <div class="ed-tools">
+          <button class="run" id="run-btn">▸ Run query</button>
+          <button class="ghost" id="reset-btn" title="Restore the original sample data">Reset data</button>
+          <span class="spacer"></span>
+          <span class="kbd-hint"><kbd id="modkey">Ctrl</kbd>+<kbd>Enter</kbd> to run</span>
+        </div>
+
+        <textarea
+          id="editor"
+          class="editor"
+          spellcheck="false"
+          aria-label="SQL query"
+          placeholder="Type SQL, then press Ctrl+Enter…"
+        ></textarea>
+
+        <section id="results" class="results" aria-live="polite" aria-label="Query results"></section>
+
+        <footer class="statusbar" id="statusbar">Ready</footer>
+      </section>
     </div>
-
-    <textarea
-      id="editor"
-      class="editor"
-      spellcheck="false"
-      aria-label="SQL query"
-      placeholder="Type SQL, then press Ctrl+Enter…"
-    ></textarea>
-
-    <section id="results" class="results" aria-live="polite" aria-label="Query results"></section>
   </body>
 </html>
