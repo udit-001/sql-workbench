@@ -7,10 +7,11 @@ import { fetchFixture } from "./bench-kit/fixture";
 import type { Outcome } from "./bench-kit/engine";
 import { openJournal } from "./bench-kit/journal-idb";
 import type { WorkbenchEvent } from "./bench-kit/journal";
-import { loadSchema } from "./bench-kit/schema";
+import { layoutTables, loadRelations, loadSchema } from "./bench-kit/schema";
 import { themeFromMessage } from "./bench-kit/theme";
 import { WasmEngine } from "./bench-kit/wasm/wasm-engine";
 import { DEMO_DATASET } from "./demo-dataset";
+import { DiagramPane } from "./ui/diagram";
 import { DomUi } from "./ui/dom-ui";
 import { HistoryTab } from "./ui/history-tab";
 import { ImportModal, type ImportSelection } from "./ui/import-modal";
@@ -105,6 +106,7 @@ function insertIdentifier(identifier: string): void {
 const schemaPanel = new SchemaPanel($("schema-panel"), insertIdentifier, (name) => {
   void removeImportedTable(name);
 });
+const diagramPane = new DiagramPane($("diagram-pane"), insertIdentifier);
 
 /* --- Journal + History (LEARN-203) ---------------------------------- */
 
@@ -154,12 +156,17 @@ function selectView(view: string, active: Element): void {
   document.body.dataset.view = view;
   const isHistory = view === "history";
   const isResults = view === "results";
-  $("tab-results").classList.toggle("on", !isHistory);
+  const isDiagram = view === "diagram";
+  $("tab-results").classList.toggle("on", !isHistory && !isDiagram);
+  $("tab-diagram").classList.toggle("on", isDiagram);
   $("tab-history").classList.toggle("on", isHistory);
-  $("tab-results").setAttribute("aria-selected", String(!isHistory));
-  $("tab-history").setAttribute("aria-selected", String(isHistory));
+  for (const tab of ["tab-results", "tab-diagram", "tab-history"]) {
+    $(tab).setAttribute("aria-selected", String($(tab).classList.contains("on")));
+  }
   $("results").classList.toggle("on", isResults);
+  $("diagram-pane").classList.toggle("on", isDiagram);
   $("history-pane").classList.toggle("on", isHistory);
+  if (isDiagram && diagramState.dirty) void renderDiagramNow();
   for (const other of document.querySelectorAll("[data-seg]")) {
     other.classList.toggle("on", other === active);
   }
@@ -170,6 +177,10 @@ for (const button of document.querySelectorAll<HTMLButtonElement>("[data-seg]"))
 $("tab-results").addEventListener("click", (e) => {
   const seg = document.querySelector('[data-seg="results"]');
   selectView("results", seg ?? e.currentTarget as Element);
+});
+$("tab-diagram").addEventListener("click", (e) => {
+  const seg = document.querySelector('[data-seg="diagram"]');
+  selectView("diagram", seg ?? e.currentTarget as Element);
 });
 $("tab-history").addEventListener("click", (e) => {
   const seg = document.querySelector('[data-seg="history"]');
@@ -222,18 +233,37 @@ async function refreshSchema(datasetTitle: string): Promise<void> {
   renderSchema(await loadSchema(engine), datasetTitle);
 }
 
+/* The diagram renders lazily: SVG text measurement returns 0 inside a
+   display:none pane, so we draw on first activation and re-draw when a
+   newer schema exists. */
+const diagramState: { dirty: boolean; tables: Awaited<ReturnType<typeof loadSchema>> } = {
+  dirty: true,
+  tables: [],
+};
+
+async function renderDiagramNow(): Promise<void> {
+  try {
+    const relations = await loadRelations(engine);
+    diagramPane.render(layoutTables(diagramState.tables, relations), relations);
+    diagramState.dirty = false;
+  } catch (err) {
+    console.error("[sql-workbench] diagram failed", err);
+  }
+}
+
 /** Render with "yours" badges merged onto learner-imported tables. */
 async function renderSchema(tables: Awaited<ReturnType<typeof loadSchema>>, datasetTitle: string): Promise<void> {
   const mine = new Map((await listImportedTables()).map((t) => [t.name, t]));
-  schemaPanel.render(
-    tables.map((table) => {
-      const record = mine.get(table.name);
-      return record
-        ? { ...table, yours: true, yoursTitle: `${record.filename} · saved in this browser` }
-        : table;
-    }),
-    datasetTitle,
-  );
+  const merged = tables.map((table) => {
+    const record = mine.get(table.name);
+    return record
+      ? { ...table, yours: true, yoursTitle: `${record.filename} · saved in this browser` }
+      : table;
+  });
+  schemaPanel.render(merged, datasetTitle);
+  diagramState.tables = merged;
+  diagramState.dirty = true;
+  if (document.body.dataset.view === "diagram") await renderDiagramNow();
 }
 
 try {

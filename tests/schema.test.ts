@@ -48,8 +48,8 @@ describe("loadSchema", () => {
       name: "customers",
       rowCount: 5,
       columns: [
-        { name: "id", type: "INTEGER" },
-        { name: "region", type: "TEXT" },
+        { name: "id", type: "INTEGER", pk: true },
+        { name: "region", type: "TEXT", pk: false },
       ],
     });
     // introspection went through the public Engine seam only

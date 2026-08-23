@@ -336,6 +336,80 @@ table.grid {
   color: var(--muted);
 }
 
+/* diagram pane */
+.diagram {
+  padding: 16px;
+  overflow: auto;
+  background:
+    radial-gradient(rgba(76, 86, 106, 0.14) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+.diagram-svg {
+  display: block;
+}
+.diagram-box {
+  fill: var(--bg);
+  stroke: var(--strong);
+  stroke-width: 1;
+}
+.diagram-box-header {
+  fill: var(--surface);
+}
+.diagram-hairline {
+  stroke: var(--divider);
+  stroke-width: 1;
+}
+.diagram-title {
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  fill: var(--heading);
+}
+.diagram-tag-text {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  fill: var(--muted);
+}
+.diagram-column {
+  font-family: var(--mono);
+  font-size: 11px;
+  fill: var(--text);
+}
+.diagram-column:hover {
+  fill: var(--accent);
+}
+.diagram-type {
+  font-family: var(--mono);
+  font-size: 9px;
+  fill: var(--muted);
+}
+.diagram-chip {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 0.8;
+}
+.diagram-chip-text {
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  fill: var(--muted);
+}
+.diagram-row-zebra {
+  fill: var(--surface);
+  opacity: 0.5;
+}
+.diagram-more {
+  font-family: var(--mono);
+  font-size: 9px;
+  fill: var(--muted);
+  font-style: italic;
+}
+.diagram-edge {
+  stroke: var(--muted);
+  stroke-width: 1;
+}
+
 /* history pane */
 .jr {
   padding: 8px 14px;
@@ -640,6 +714,9 @@ body[data-mode="card"] .editor {
     display: block;
   }
   body[data-view="results"] .statusbar {
+    display: block;
+  }
+  body[data-view="diagram"] #diagram-pane {
     display: block;
   }
   /* Segments carry the active-view state on mobile — the Results/History

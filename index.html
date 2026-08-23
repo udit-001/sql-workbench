@@ -35,6 +35,7 @@
       <button type="button" data-seg="schema">Schema</button>
       <button type="button" data-seg="query" class="on">Query</button>
       <button type="button" data-seg="results">Results</button>
+      <button type="button" data-seg="diagram">Diagram</button>
       <button type="button" data-seg="history">History</button>
     </nav>
 
@@ -59,10 +60,13 @@
 
         <div class="tabs" role="tablist">
           <button class="tab on" id="tab-results" role="tab" aria-selected="true">Results</button>
+          <button class="tab" id="tab-diagram" role="tab" aria-selected="false">Diagram</button>
           <button class="tab" id="tab-history" role="tab" aria-selected="false">History <span id="history-count"></span></button>
         </div>
 
         <section id="results" class="pane on pane-results" aria-live="polite" aria-label="Query results"></section>
+
+        <section id="diagram-pane" class="pane diagram" aria-label="Database diagram"></section>
 
         <section id="history-pane" class="pane jr" aria-label="Run history">
           <div class="jr-tools">
