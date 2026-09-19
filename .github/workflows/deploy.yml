@@ -1,11 +1,12 @@
-# Single deploy pipeline per docs/research/deployment-distribution.md:
-# one dist, two surfaces — GitHub Pages (standalone app) and an asset zip
-# attached to the GitHub release (vendored Pharos asset).
+# Pages (the docs + demo site) deploys on every push to main.
+# Releases (pinned component artifact for jsDelivr/vendoring) only on v* tags.
 name: Deploy
 
 on:
   push:
+    branches: [main]
     tags: ["v*"]
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -53,6 +54,7 @@ jobs:
         uses: actions/deploy-pages@v4
 
   release:
+    if: startsWith(github.ref, "refs/tags/")
     needs: build
     runs-on: ubuntu-latest
     steps:
