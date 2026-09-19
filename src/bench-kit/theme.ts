@@ -8,6 +8,11 @@
 
 export type Theme = "dark" | "light";
 
+/** The shared localStorage key: holds the host's MODE ('system' | 'light'
+ *  | 'dark'). The FOUC guard in index.html repeats this string by
+ *  necessity — it must run before any module loads. */
+export const SHARED_THEME_KEY = "pharos_theme";
+
 /** Returns the theme when `data` is a valid relay message, else undefined. */
 export function themeFromMessage(data: unknown): Theme | undefined {
   if (typeof data !== "object" || data === null) return undefined;
