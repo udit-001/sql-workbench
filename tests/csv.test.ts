@@ -112,6 +112,20 @@ describe("identifier sanitizers", () => {
     const parsed = parseCsv("amount,amount,\n1,2,3\n", { delimiter: ",", hasHeader: true });
     expect(parsed.columns).toEqual(["amount", "amount_2", "col"]);
   });
+
+  it("caps identifier length so long filenames can't break the UI", () => {
+    const name = sanitizeTableName("a".repeat(200));
+    expect(name.length).toBeLessThanOrEqual(48);
+    expect(name).toMatch(/^a+$/);
+  });
+
+  it("still distinguishes two over-long colliding columns", () => {
+    const long = "col".repeat(30); // 90 chars — all sanitize to the same 48-char base
+    const parsed = parseCsv(`${long},${long}\n1,2\n`, { delimiter: ",", hasHeader: true });
+    const [first, second] = parsed.columns;
+    expect(first).not.toBe(second);
+    expect(second?.endsWith("_2")).toBe(true);
+  });
 });
 
 describe("buildImportScript", () => {

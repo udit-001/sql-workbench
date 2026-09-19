@@ -28,6 +28,17 @@ export class ImportModal {
   private csvText = "";
   private filename = "";
   private onImport: ((selection: ImportSelection) => Promise<void>) | undefined;
+  /** Element to hand focus back to on close (the button/input that opened us). */
+  private opener: HTMLElement | null = null;
+
+  private readonly onKeyDown = (event: KeyboardEvent): void => {
+    if (!this.isOpen()) return;
+    if (event.key === "Escape") {
+      this.close();
+      return;
+    }
+    if (event.key === "Tab") this.trapTab(event);
+  };
 
   constructor(elements: {
     overlay: HTMLElement;
@@ -53,9 +64,7 @@ export class ImportModal {
     this.overlay.addEventListener("click", (event) => {
       if (event.target === this.overlay) this.close();
     });
-    document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape" && this.isOpen()) this.close();
-    });
+    document.addEventListener("keydown", this.onKeyDown);
     for (const control of [this.delimiterSelect, this.headerCheckbox]) {
       control.addEventListener("change", () => this.refresh());
     }
@@ -72,6 +81,7 @@ export class ImportModal {
   async openFor(filename: string, csvText: string): Promise<void> {
     this.csvText = csvText;
     this.filename = filename;
+    this.opener = (this.overlay.getRootNode() as Document | ShadowRoot).activeElement as HTMLElement | null;
     const stem = filename.replace(/\.[^.]+$/, "");
     this.nameInput.value = sanitizeTableName(stem);
     this.delimiterSelect.value = detectDelimiter(csvText);
@@ -96,6 +106,36 @@ export class ImportModal {
     this.onImport = undefined;
     this.csvText = "";
     this.filename = "";
+    // Keyboard users exit back where they came from, not at <body>.
+    this.opener?.focus();
+    this.opener = null;
+  }
+
+  /** Remove the document-level listener — for teardown of a mounted bench. */
+  dispose(): void {
+    document.removeEventListener("keydown", this.onKeyDown);
+  }
+
+  /** Keep Tab cycling inside the modal while it blocks the bench. */
+  private trapTab(event: KeyboardEvent): void {
+    const focusables = [
+      ...this.overlay.querySelectorAll<HTMLElement>(
+        "button, input, select, [tabindex]:not([tabindex='-1'])",
+      ),
+    ].filter((el) => !el.hasAttribute("disabled"));
+    if (focusables.length === 0) return;
+    const first = focusables[0] as HTMLElement;
+    const last = focusables[focusables.length - 1] as HTMLElement;
+    const active = (this.overlay.getRootNode() as Document | ShadowRoot)
+      .activeElement as Element | null;
+    const inside = active !== null && this.overlay.contains(active);
+    if (event.shiftKey && (!inside || active === first)) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && (!inside || active === last)) {
+      event.preventDefault();
+      first.focus();
+    }
   }
 
   /** Registers the execute callback; set fresh on every open. */

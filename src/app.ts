@@ -319,9 +319,19 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
     );
   }
 
-  /** Submit what's in the editor; blank is a no-op; journaled immediately. */
+  /** Submit what's in the editor; blank is a no-op; journaled immediately.
+      Infrastructural engine failures (crashed worker, dead WASM) reject out
+      of submit — they are not learner SQL errors, so they surface through
+      the boot-error panel instead of vanishing as unhandled rejections. */
   async function run(sql: string): Promise<Outcome | undefined> {
-    const outcome = await bench.submit(sql);
+    let outcome: Outcome | undefined;
+    try {
+      outcome = await bench.submit(sql);
+    } catch (err) {
+      console.error("[sql-workbench] engine failure", err);
+      ui.showBootError("The database engine failed — reload the page to restart it.");
+      return undefined;
+    }
     // Blank queries are a no-op; real runs land in the journal immediately.
     if (outcome) await recordQuery(sql.trim(), outcome);
     return outcome;
@@ -330,6 +340,9 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
   $("run-btn").addEventListener("click", () => void run(editor.value));
   host.addEventListener("keydown", (event) => {
     if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+      // No hidden runs while the import modal blocks the view — the
+      // learner's keystrokes belong to the modal until it closes.
+      if (importModal.isOpen()) return;
       event.preventDefault();
       void run(editor.value);
     }
@@ -577,9 +590,14 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
     });
     await refreshSchema(currentDataset.title);
 
-    editor.value = `SELECT *\nFROM ${selection.tableName}\nLIMIT 10;`;
-    caret = null;
-    refreshHighlight();
+    // Preserve the learner's draft: only prefill a "try it" query when the
+    // editor holds nothing of theirs. Silently overwriting a query they
+    // were typing would destroy unjournalled work.
+    if (!editor.value.trim()) {
+      editor.value = `SELECT *\nFROM ${selection.tableName}\nLIMIT 10;`;
+      caret = null;
+      refreshHighlight();
+    }
     ui.setStatus(
       `Imported ${selection.rows.toLocaleString("en-US")} rows into ${selection.tableName}`,
     );
@@ -661,10 +679,9 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
       editor.value = sql;
       caret = null;
       refreshHighlight();
-      const outcome = await bench.submit(sql);
-      // Blank queries are a no-op; real runs land in the journal immediately.
-      if (outcome) await recordQuery(sql.trim(), outcome);
-      return outcome;
+      // Same submit path as the editor: one journaling point, one
+      // infra-failure surface.
+      return run(sql);
     },
     reset: () => resetDataset(),
     exportMarkdown,
@@ -677,6 +694,7 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
     },
     dispose() {
       theme.dispose();
+      importModal.dispose();
       host.classList.remove("bench", "dragging");
       delete host.dataset.theme;
       delete host.dataset.mode;

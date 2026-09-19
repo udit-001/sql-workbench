@@ -176,6 +176,8 @@ function renderOk(outcome: QueryOutcome): DocumentFragment {
         td.textContent = `<blob ${value.length} bytes>`;
       } else {
         td.textContent = String(value);
+        // Long values are ellipsised by CSS — keep the full text reachable.
+        if (String(value).length > 40) td.title = String(value);
       }
       tr.append(td);
     }

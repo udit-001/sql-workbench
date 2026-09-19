@@ -172,6 +172,17 @@ button {
 .tbl > button:hover {
   background: var(--wb-surface);
 }
+/* Imported filenames can be arbitrarily long even after sanitising —
+   the name shrinks and ellipses instead of pushing the count badge
+   (and the ✕ for "yours" tables) out of the 230px sidebar. */
+.tbl .tbl-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
 .tbl .chev {
   transition: transform 0.15s;
   font-size: 0.65rem;
@@ -203,6 +214,12 @@ button {
 .col:hover {
   color: var(--wb-accent);
   background: var(--wb-surface);
+}
+.col .col-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .col .ty {
   color: var(--wb-muted);
@@ -361,6 +378,11 @@ table.grid {
   font-family: var(--wb-mono);
   font-size: 0.78rem;
   white-space: nowrap;
+  /* One huge cell must not turn the grid into a 60,000px horizontal
+     crawl — cap the cell; the full value stays available via title. */
+  max-width: 40ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .grid tr:hover td {
   background: var(--wb-surface);
@@ -884,6 +906,11 @@ table.preview-table {
     display: none;
   }
   .bench[data-view="query"] .editor {
+    display: block;
+  }
+  /* The wrap must come back too — un-hiding the textarea inside a
+     display:none parent left mobile with a Run button and no editor. */
+  .bench[data-view="query"] .editor-wrap {
     display: block;
   }
   .bench[data-view="query"] .ed-tools {

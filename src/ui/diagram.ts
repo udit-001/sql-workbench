@@ -29,7 +29,12 @@ export class DiagramPane {
 
   render(nodes: DiagramNode[], relations: Relation[]): void {
     if (nodes.length === 0) {
-      this.container.replaceChildren();
+      // Match the schema panel's empty state — a blank pane reads as broken.
+      const note = document.createElement("div");
+      note.className = "schema-empty";
+      note.style.padding = "16px";
+      note.textContent = "No tables to diagram yet — run some CREATE TABLE statements.";
+      this.container.replaceChildren(note);
       return;
     }
     this.fkColumns = collectFkColumns(relations);
@@ -145,6 +150,9 @@ export class DiagramPane {
     );
     count.setAttribute("text-anchor", "end");
     group.append(count);
+    // Measured after both exist so the title truncates between the box
+    // edge and the row count instead of overlapping it.
+    fitText(title, BOX_W - 24 - count.getComputedTextLength() - 8);
 
     box.table.columns.slice(0, MAX_ROWS).forEach((column, i) => {
       const rowY = box.y + HEADER_H + i * ROW_H;
@@ -165,11 +173,12 @@ export class DiagramPane {
         ...(column.pk ? ["PK"] : []),
         ...(this.fkColumns.get(box.table.name)?.has(column.name) ? ["FK"] : []),
       ];
+      let chipW = 0;
       if (chips.length > 0) {
         // Placed after the measured name so it never overlaps the label.
         const nameWidth = name.getComputedTextLength();
         const label = chips.join(" ");
-        const chipW = label.length * 5 + 8;
+        chipW = label.length * 5 + 8;
         const chipRect = rect(box.x + 12 + nameWidth + 8, rowY + 5, chipW, 12);
         chipRect.setAttribute("class", "diagram-chip");
         chipRect.setAttribute("rx", "2");
@@ -181,6 +190,9 @@ export class DiagramPane {
       const type = text(box.x + BOX_W - 12, rowY + 16, column.type.toLowerCase(), "diagram-type");
       type.setAttribute("text-anchor", "end");
       group.append(type);
+      // Name truncates before the PK/FK chips and the type text.
+      const reserved = type.getComputedTextLength() + (chips.length > 0 ? chipW + 16 : 0);
+      fitText(name, BOX_W - 24 - reserved);
     });
 
     if (box.table.columns.length > MAX_ROWS) {
@@ -261,6 +273,23 @@ function text(x: number, y: number, content: string, cssClass: string): SVGTextE
   el.setAttribute("class", cssClass);
   el.textContent = content;
   return el;
+}
+
+/**
+ * SVG has no ellipsis — trim measured text until it fits its box. A
+ * 173-character imported table name must not paint 1144px past the
+ * box edge over its neighbours. No-ops where measurement is
+ * unavailable (node test environment).
+ */
+function fitText(el: SVGTextElement, maxWidth: number): void {
+  const measured = el.getComputedTextLength?.bind(el);
+  if (typeof measured !== "function" || el.textContent === null) return;
+  if (measured() <= maxWidth) return;
+  let body = el.textContent;
+  while (body.length > 1 && measured() > maxWidth) {
+    body = body.slice(0, -1);
+    el.textContent = `${body}…`;
+  }
 }
 
 /**

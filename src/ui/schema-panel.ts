@@ -37,6 +37,7 @@ export class SchemaPanel {
       chev.className = "chev";
       chev.textContent = "▶";
       const name = document.createElement("span");
+      name.className = "tbl-name";
       name.textContent = table.name;
       if (table.yours) {
         name.title = table.yoursTitle ?? "Imported from your CSV — saved in this browser";
@@ -72,6 +73,7 @@ export class SchemaPanel {
         col.className = "col";
         col.title = `Insert ${column.name}`;
         const colName = document.createElement("span");
+        colName.className = "col-name";
         colName.textContent = column.name;
         const colType = document.createElement("span");
         colType.className = "ty";

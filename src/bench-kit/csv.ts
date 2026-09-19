@@ -107,13 +107,23 @@ function splitRecords(text: string, delimiter: string): string[][] {
   return records.filter((r) => !(r.length === 1 && r[0] === ""));
 }
 
+/** Identifiers become SQL names AND sidebar/diagram labels — keep them UI-width. */
+const MAX_IDENTIFIER_LENGTH = 48;
+
 /**
  * Table/column names become SQL identifiers: lowercase [a-z0-9_] only,
  * can't start with a digit. Anything else collapses to `_`; empty gets
- * the caller's fallback (tables `t`, columns `col`).
+ * the caller's fallback (tables `t`, columns `col`). Length is capped so
+ * a 200-character filename can't blow out the schema panel or diagram.
  */
 function sanitizeIdentifier(raw: string, fallback: string, digitPrefix: string): string {
-  const name = raw.toLowerCase().trim().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+  const name = raw
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, MAX_IDENTIFIER_LENGTH)
+    .replace(/_+$/, "");
   if (!name) return fallback;
   return /^\d/.test(name) ? `${digitPrefix}${name}` : name;
 }
