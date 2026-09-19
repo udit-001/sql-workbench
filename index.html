@@ -80,6 +80,19 @@
         background: var(--page-bg); border: 1px solid var(--page-border);
         border-radius: 10px; box-shadow: 0 2px 8px rgba(0, 0, 0, .18);
         min-width: 200px; z-index: 20;
+        transform-origin: top right; /* grows from the ☰ trigger */
+        transition: opacity 150ms ease-out, transform 150ms ease-out;
+      }
+      /* Closed <details> children aren't rendered — opening re-renders
+         the list, so this starting style bridges the entrance. */
+      @starting-style {
+        .nav-list { opacity: 0; transform: scale(0.96); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .nav-list { transition: opacity 120ms ease-out; }
+        @starting-style {
+          .nav-list { transform: none; }
+        }
       }
       .nav-list a {
         display: block; padding: var(--space-3); border-radius: 6px;
@@ -94,7 +107,24 @@
       }
       #theme-toggle:hover,
       .nav-menu summary:hover { border-color: var(--page-accent); }
-      #theme-toggle { padding: var(--space-1) var(--space-3); }
+      #theme-toggle {
+        display: inline-grid; place-items: center;
+        padding: var(--space-1) var(--space-2); overflow: hidden;
+      }
+      #theme-toggle svg {
+        grid-area: 1 / 1; width: 16px; height: 16px;
+        transition: opacity 200ms ease-out, transform 200ms ease-out;
+      }
+      /* Icon shows the mode clicking switches to: moon in light, sun in
+         dark. The outgoing icon rotates and shrinks as it fades. */
+      #theme-toggle .icon-sun { opacity: 0; transform: rotate(-90deg) scale(0.6); }
+      [data-theme="dark"] #theme-toggle .icon-sun { opacity: 1; transform: none; }
+      [data-theme="dark"] #theme-toggle .icon-moon { opacity: 0; transform: rotate(90deg) scale(0.6); }
+      @media (prefers-reduced-motion: reduce) {
+        #theme-toggle svg { transition: opacity 120ms ease-out; }
+        #theme-toggle .icon-sun,
+        [data-theme="dark"] #theme-toggle .icon-moon { transform: none; }
+      }
       .nav-menu summary {
         list-style: none;
         display: flex; align-items: center; justify-content: center;
@@ -171,7 +201,10 @@
         </a>
         <span class="spacer"></span>
         <a class="gh" href="https://github.com/udit-001/sql-workbench">GitHub</a>
-        <button id="theme-toggle" aria-label="Toggle light or dark theme" title="Toggle page theme — the benches below follow">◐</button>
+        <button id="theme-toggle" aria-label="Toggle light or dark theme" title="Toggle page theme — the benches below follow">
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="16" height="16"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="16" height="16"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+        </button>
         <details class="nav-menu" id="nav-menu">
           <summary aria-label="Jump to a section">☰</summary>
           <ul class="nav-list"></ul>

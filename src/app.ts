@@ -37,7 +37,10 @@ export const BENCH_TEMPLATE = `
   <span class="chip" id="dataset-chip" hidden></span>
   <span class="spacer"></span>
   <button class="ghost" id="import-btn" style="font-size:.75rem" title="Load your own CSV file and query it like any table">↑ Import CSV</button>
-  <button class="iconbtn" id="theme-toggle" aria-label="Toggle light or dark theme" title="Theme">◐</button>
+  <button class="iconbtn" id="theme-toggle" aria-label="Toggle light or dark theme" title="Theme">
+    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="16" height="16"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="16" height="16"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+  </button>
 </header>
 
 <!-- Mobile-only view switcher (spec user story 17) -->
