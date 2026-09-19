@@ -39,6 +39,7 @@ Prefer vendoring? Download `sql-workbench.js` from the [releases](https://github
 | `namespace` | any name | private data space for this bench: its own journal and imported tables (read at connect) |
 | `dataset` | dataset id | load a named dataset instead of the built-in demo (read at connect) |
 | `sql` | SQL text | boot-time editor prefill; beats the dataset-derived default (read at connect) |
+| `autofocus` | boolean | focus the editor after boot; **off by default** — a bench mid-page must not take the host's keyboard. Add it when the bench is the task (card drill in its own iframe) |
 
 ### API
 

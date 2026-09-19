@@ -37,6 +37,8 @@ export class SqlWorkbench extends HTMLElement {
     const ns = this.getAttribute("namespace") ?? this.getAttribute("db");
     const dataset = this.getAttribute("dataset") ?? this.getAttribute("fixture");
     const sql = this.getAttribute("sql");
+    // Boolean presence, like the HTML autofocus attribute it mirrors.
+    const autofocus = this.hasAttribute("autofocus");
     // Mirror the resolved theme onto the element: :host([data-theme]) is
     // where the token blocks live, so integrators can out-vote any dark
     // default from their own element styles.
@@ -52,6 +54,7 @@ export class SqlWorkbench extends HTMLElement {
       ...(ns ? { namespace: ns } : {}),
       ...(dataset ? { dataset } : {}),
       ...(sql ? { sql } : {}),
+      ...(autofocus ? { autofocus: true } : {}),
       onEvent: (event) => {
         this.dispatchEvent(new CustomEvent("workbench-event", { detail: event }));
       },

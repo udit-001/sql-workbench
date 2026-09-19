@@ -142,6 +142,11 @@ export interface MountOptions {
       is run(). Prefilling is not an action: nothing is journaled, and an
       invalid query surfaces through the learner's own run. */
   sql?: string;
+  /** Take keyboard focus after boot (mirrors the HTML autofocus
+      attribute). Off by default: a bench embedded mid-page must not grab
+      the host's keyboard — the host opts in when the bench is the task,
+      e.g. a card drill in its own iframe. */
+  autofocus?: boolean;
   /** Called for every journaled event (query runs, resets, imports). */
   onEvent?: (event: WorkbenchEvent) => void;
 }
@@ -279,7 +284,9 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
     editor.setRangeText(inserted, start, end, "end");
     const newCaret = start + inserted.length;
     caret = { start: newCaret, end: newCaret, len: editor.value.length };
-    editor.focus();
+    // The click on the schema panel already says where the user is
+    // looking — take the caret without scrolling the page to the editor.
+    editor.focus({ preventScroll: true });
     editor.setSelectionRange(newCaret, newCaret);
     refreshHighlight(); // setRangeText doesn't fire input
   }
@@ -516,11 +523,14 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
     chip.hidden = false;
     const journal = await journalPromise;
     await history.refresh(await journal.list());
-    // Caret lands in the editor so typing starts immediately — but an
-    // embedded bench sits below the fold, and a bare focus() would yank
-    // the host page down to it on load. preventScroll keeps the caret
-    // without the jump; the first keypress scrolls naturally.
-    editor.focus({ preventScroll: true });
+    // Autofocus is opt-in (opts.autofocus / the autofocus attribute), and
+    // even then only when the human hasn't beaten us to it: boot can take
+    // seconds on a slow connection, and a focus that lands after the user
+    // already Tab'd or clicked somewhere is theft, not convenience.
+    if (opts.autofocus && document.activeElement === document.body) {
+      // preventScroll: the host chose focus, not scroll.
+      editor.focus({ preventScroll: true });
+    }
   } catch (err) {
     // Malformed/missing fixtures fail loud: console + visible panel.
     console.error("[sql-workbench]", err);
