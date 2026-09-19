@@ -798,6 +798,12 @@ table.preview-table {
    and statusbar stay out of the card. */
 .bench[data-mode="card"] {
   font-size: 14px;
+  /* Framed surface: an embedded bench must read as its own interactive
+     region against the surrounding prose, not blend into it. */
+  background: var(--wb-bg);
+  border: 1px solid var(--wb-border);
+  border-radius: 10px;
+  overflow: hidden;
 }
 .bench[data-mode="card"] .top,
 .bench[data-mode="card"] .schema,
@@ -822,8 +828,11 @@ table.preview-table {
   padding: 4px 13px;
 }
 .bench[data-mode="card"] .editor-wrap {
-  height: auto;
-  min-height: 88px;
+  /* Fixed readable height (~8 lines): absolute-positioned layers never
+     grow an auto wrapper, and starter queries must not clip mid-line.
+     Longer input scrolls inside the editor. */
+  height: 176px;
+  min-height: 120px;
   max-height: 40vh;
   resize: none;
 }
