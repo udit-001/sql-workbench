@@ -61,6 +61,34 @@
       header.page a.gh {
         font-size: .85rem; color: var(--page-accent); text-decoration: none;
       }
+      header.page .brand {
+        display: flex; align-items: center; gap: var(--space-3);
+        color: inherit; text-decoration: none;
+      }
+      /* Mobile sections menu (≤640px): the toc row hides; the header
+         disclosure takes the same links (cloned in docs.ts). */
+      .nav-menu { display: none; }
+      .nav-menu summary {
+        list-style: none; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        min-width: 44px; min-height: 44px;
+        font: inherit; background: none; border: 1px solid var(--page-border);
+        border-radius: 6px; padding: 0 var(--space-2); color: var(--page-ink);
+      }
+      .nav-menu summary::-webkit-details-marker { display: none; }
+      .nav-menu summary:hover { border-color: var(--page-accent); }
+      .nav-list {
+        position: absolute; right: 0; top: calc(100% + var(--space-2));
+        margin: 0; padding: var(--space-2); list-style: none;
+        background: var(--page-bg); border: 1px solid var(--page-border);
+        border-radius: 10px; box-shadow: 0 2px 8px rgba(0, 0, 0, .18);
+        min-width: 200px; z-index: 20;
+      }
+      .nav-list a {
+        display: block; padding: var(--space-3); border-radius: 6px;
+        color: var(--page-accent); text-decoration: none; font-size: .95rem;
+      }
+      .nav-list a:hover { background: var(--page-surface); color: var(--page-ink); }
       #theme-toggle {
         font: inherit; background: none; border: 1px solid var(--page-border);
         border-radius: 6px; padding: var(--space-1) var(--space-3); cursor: pointer; color: var(--page-ink);
@@ -105,6 +133,13 @@
       #hero { height: 620px; }
       #card-demo { height: 420px; }
       .cols { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+      @media (max-width: 640px) {
+        .toc { display: none; }
+        .nav-menu { display: block; position: relative; }
+        #theme-toggle { padding: var(--space-3); }
+        header.page a.gh { display: inline-block; padding: var(--space-3) var(--space-1); }
+        h2 { scroll-margin-top: 84px; } /* header grows to ~73px on phones */
+      }
       @media (max-width: 800px) { .cols { grid-template-columns: 1fr; } }
       footer.page {
         margin-top: var(--space-16); padding-top: var(--space-6); border-top: 1px solid var(--page-border);
@@ -120,14 +155,20 @@
   <body>
     <div class="wrap">
       <header class="page">
-        <svg class="logo" width="22" height="22" viewBox="0 0 16 16" aria-hidden="true">
-          <rect width="16" height="16" rx="3" fill="var(--page-accent)"/>
-          <path d="M3 5l3 3-3 3M7.5 11H13" stroke="var(--page-bg)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        <span class="name">sql-workbench</span>
+        <a class="brand" href="#" aria-label="sql-workbench — back to top">
+          <svg class="logo" width="22" height="22" viewBox="0 0 16 16" aria-hidden="true">
+            <rect width="16" height="16" rx="3" fill="var(--page-accent)"/>
+            <path d="M3 5l3 3-3 3M7.5 11H13" stroke="var(--page-bg)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="name">sql-workbench</span>
+        </a>
         <span class="spacer"></span>
         <a class="gh" href="https://github.com/udit-001/sql-workbench">GitHub</a>
         <button id="theme-toggle" aria-label="Toggle light or dark theme" title="Toggle page theme — the benches below follow">◐</button>
+        <details class="nav-menu" id="nav-menu">
+          <summary aria-label="Jump to a section">☰</summary>
+          <ul class="nav-list"></ul>
+        </details>
       </header>
 
       <h1>A SQL practice bench, in one script tag.</h1>

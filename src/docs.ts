@@ -31,6 +31,27 @@ if (themeToggle) {
   });
 }
 
+/* Mobile sections menu (≤640px): the toc row hides and the header
+   disclosure takes clones of the same links — one source of truth for
+   section navigation. Close on selection, outside tap, or Escape. */
+const navMenu = document.getElementById("nav-menu") as HTMLDetailsElement | null;
+const tocList = document.querySelector(".toc");
+if (navMenu && tocList) {
+  navMenu.querySelector(".nav-list")?.append(
+    ...[...tocList.querySelectorAll("a")].map((a) => a.cloneNode(true)),
+  );
+  const closeMenu = () => navMenu.removeAttribute("open");
+  navMenu.addEventListener("click", (e) => {
+    if ((e.target as Element).closest("a")) closeMenu();
+  });
+  document.addEventListener("click", (e) => {
+    if (navMenu.open && !navMenu.contains(e.target as Node)) closeMenu();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeMenu();
+  });
+}
+
 /* Copy buttons on code blocks marked data-copy. */
 for (const pre of document.querySelectorAll<HTMLElement>("pre[data-copy]")) {
   if (pre.querySelector(".copy-btn")) continue;
