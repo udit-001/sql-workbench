@@ -8,8 +8,8 @@
       rel="icon"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%232e3440'/%3E%3Cpath d='M3 5l3 3-3 3M7.5 11H13' stroke='%2381a1c1' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"
     />
-    <!-- Theme FOUC guard — shared pharos_theme key with Pharos; LEARN-205
-         adds the live postMessage relay for embedded mode. -->
+    <!-- Theme FOUC guard — shared pharos_theme key with Pharos; the bench
+         follows it (and the live relay) once mounted. -->
     <script>
       ;(function () {
         var t = localStorage.getItem('pharos_theme')
@@ -19,98 +19,21 @@
         document.documentElement.dataset.theme = t
       })()
     </script>
+    <style>
+      /* Page chrome only — all bench styling lives in the shadow root. */
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+      }
+      sql-workbench {
+        display: block;
+        height: 100vh;
+      }
+    </style>
     <script type="module" src="/src/main.ts"></script>
   </head>
-  <body data-view="query">
-    <header class="top">
-      <span class="name">sql-workbench</span>
-      <span class="chip" id="dataset-chip" hidden></span>
-      <span class="spacer"></span>
-      <button class="ghost" id="import-btn" style="font-size:.75rem" title="Load your own CSV file and query it like any table">↑ Import CSV</button>
-      <button class="iconbtn" id="theme-toggle" aria-label="Toggle light or dark theme" title="Theme">◐</button>
-    </header>
-
-    <!-- Mobile-only view switcher (spec user story 17) -->
-    <nav class="seg" aria-label="Bench sections">
-      <button type="button" data-seg="schema">Schema</button>
-      <button type="button" data-seg="query" class="on">Query</button>
-      <button type="button" data-seg="results">Results</button>
-      <button type="button" data-seg="diagram">Diagram</button>
-      <button type="button" data-seg="history">History</button>
-    </nav>
-
-    <div class="shell">
-      <aside class="schema" id="schema-panel" aria-label="Tables in this sample dataset"></aside>
-
-      <section class="main">
-        <div class="ed-tools">
-          <button class="run" id="run-btn">▸ Run query</button>
-          <button class="ghost" id="reset-btn" title="Restore the original sample data">Reset data</button>
-          <span class="spacer"></span>
-          <span class="kbd-hint"><kbd id="modkey">Ctrl</kbd>+<kbd>Enter</kbd> to run</span>
-        </div>
-
-        <div class="editor-wrap" id="editor-wrap">
-          <pre class="highlight-layer" id="highlight-layer" aria-hidden="true"><code class="highlight-code" id="highlight-code"></code></pre>
-          <textarea
-            id="editor"
-            class="editor"
-            spellcheck="false"
-            aria-label="SQL query"
-            placeholder="Type SQL, then press Ctrl+Enter…"
-          ></textarea>
-        </div>
-
-        <div class="tabs" role="tablist">
-          <button class="tab on" id="tab-results" role="tab" aria-selected="true">Results</button>
-          <button class="tab" id="tab-diagram" role="tab" aria-selected="false">Diagram</button>
-          <button class="tab" id="tab-history" role="tab" aria-selected="false">History <span id="history-count"></span></button>
-        </div>
-
-        <section id="results" class="pane on pane-results" aria-live="polite" aria-label="Query results"></section>
-
-        <section id="diagram-pane" class="pane diagram" aria-label="Database diagram"></section>
-
-        <section id="history-pane" class="pane jr" aria-label="Run history">
-          <div class="jr-tools">
-            <button class="ghost" id="export-btn" title="Download your runs as Markdown — paste it into any chat">↓ Export Markdown</button>
-          </div>
-          <div id="history-list"></div>
-          <div class="jr-note" id="history-empty">No runs yet — press Ctrl+Enter to run a query.</div>
-        </section>
-
-        <footer class="statusbar" id="statusbar">Ready</footer>
-      </section>
-    </div>
-
-    <div class="overlay" id="import-overlay">
-      <div class="modal">
-        <header>Import CSV</header>
-        <div class="body">
-          <div class="filemeta" id="import-filemeta">Reading file…</div>
-          <div class="preview-wrap"><table class="preview-table" id="import-preview"></table></div>
-          <div class="frow">
-            <label for="import-name">Table name</label>
-            <input type="text" id="import-name" spellcheck="false" />
-            <span class="kbd-hint">from filename — edit if you like</span>
-          </div>
-          <div class="frow">
-            <label for="import-delimiter">Delimiter</label>
-            <select id="import-delimiter">
-              <option value="," selected>comma ( , )</option>
-              <option value=";">semicolon ( ; )</option>
-              <option value="\\t">tab</option>
-            </select>
-            <label class="chk"><input type="checkbox" id="import-header" checked /> First row holds column names</label>
-          </div>
-          <div class="drop-hint">…or drop a .csv anywhere on the bench</div>
-          <div class="boot-error" id="import-error" hidden></div>
-        </div>
-        <footer>
-          <button class="ghost" id="import-cancel">Cancel</button>
-          <button class="run" id="import-go">Import</button>
-        </footer>
-      </div>
-    </div>
+  <body>
+    <noscript>sql-workbench needs JavaScript.</noscript>
   </body>
 </html>

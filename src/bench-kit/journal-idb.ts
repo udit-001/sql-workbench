@@ -11,9 +11,9 @@ import { openKv } from "./idb-kv";
 
 const KEY = "journal-events";
 
-export async function openJournal(): Promise<Journal> {
+export async function openJournal(namespace?: string): Promise<Journal> {
   try {
-    const kv = await openKv();
+    const kv = await openKv(namespace);
     return {
       async append(event) {
         const existing = (await kv.get<WorkbenchEvent[]>(KEY)) ?? [];

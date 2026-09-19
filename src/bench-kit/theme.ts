@@ -20,3 +20,43 @@ export function themeFromMessage(data: unknown): Theme | undefined {
   }
   return undefined;
 }
+
+/* ── Theme resolution for embedded use (component mount) ──────────────
+
+   Precedence, verified live against the Pharos dashboard:
+   1. explicit `theme` attribute on the element
+   2. the shared `pharos_theme` localStorage key — holds the user's MODE
+      ('system' | 'light' | 'dark'), resolved against the OS preference
+   3. the host document's resolved theme (html[data-theme])
+   4. the OS preference
+
+   The controller NEVER writes `pharos_theme` when hosted (LEARN-224):
+   the key holds the host's mode, and a resolved value written over
+   'system' would freeze the host's theme. Standalone keeps the old
+   read-modify-write — it owns the key there. */
+
+export type ThemeInput = {
+  /** Explicit theme attribute ('light' | 'dark'), else undefined. */
+  explicit?: Theme;
+  /** Raw value of the pharos_theme key ('system' | 'light' | 'dark' | null). */
+  stored: string | null;
+  /** Resolved theme on the host document element, if any. */
+  documentTheme?: string;
+  /** Whether the OS prefers dark. */
+  prefersDark: boolean;
+};
+
+export function resolveTheme(input: ThemeInput): Theme {
+  if (input.explicit) return input.explicit;
+  const stored = input.stored;
+  if (stored === "light" || stored === "dark") return stored;
+  if (input.documentTheme === "light" || input.documentTheme === "dark") {
+    return input.documentTheme;
+  }
+  return input.prefersDark ? "dark" : "light";
+}
+
+/** True when this bench owns the shared key: top-level document, no host. */
+export function ownsSharedThemeKey(): boolean {
+  return typeof window === "undefined" || window.parent === window;
+}

@@ -22,20 +22,20 @@ export interface ImportedTable {
   importedAt: number;
 }
 
-export async function listImportedTables(): Promise<ImportedTable[]> {
-  const kv = await openKv();
+export async function listImportedTables(namespace?: string): Promise<ImportedTable[]> {
+  const kv = await openKv(namespace);
   return ((await kv.get<ImportedTable[]>(KEY)) ?? []).slice();
 }
 
-export async function saveImportedTable(table: ImportedTable): Promise<void> {
-  const kv = await openKv();
+export async function saveImportedTable(table: ImportedTable, namespace?: string): Promise<void> {
+  const kv = await openKv(namespace);
   const tables = (await kv.get<ImportedTable[]>(KEY)) ?? [];
   const next = [...tables.filter((t) => t.name !== table.name), table];
   await kv.put(KEY, next);
 }
 
-export async function deleteImportedTable(name: string): Promise<void> {
-  const kv = await openKv();
+export async function deleteImportedTable(name: string, namespace?: string): Promise<void> {
+  const kv = await openKv(namespace);
   const tables = (await kv.get<ImportedTable[]>(KEY)) ?? [];
   await kv.put(
     KEY,

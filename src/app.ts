@@ -1,0 +1,674 @@
+/**
+ * The bench application behind the mount seam (component + standalone
+ * share one implementation). `mount(host, opts)` builds the entire bench
+ * DOM inside `host` (a shadow root's wrapper, or a plain container),
+ * wires every module, and returns a small control handle.
+ *
+ * What the caller must provide: a host element and optional dataset /
+ * mode / theme / storage-namespace choices. Everything else — engine,
+ * journal, schema, CSV, export — is internal.
+ */
+import styles from "./styles.css?inline";
+import { Bench } from "./bench-kit/bench";
+import { buildImportScript, parseCsv } from "./bench-kit/csv";
+import { deleteImportedTable, listImportedTables, saveImportedTable, type ImportedTable } from "./bench-kit/csv-store";
+import { eventsToMarkdown } from "./bench-kit/export-markdown";
+import { fetchFixture } from "./bench-kit/fixture";
+import { highlightSql } from "./bench-kit/highlight";
+import type { Outcome } from "./bench-kit/engine";
+import { openJournal } from "./bench-kit/journal-idb";
+import type { WorkbenchEvent } from "./bench-kit/journal";
+import { layoutTables, loadRelations, loadSchema } from "./bench-kit/schema";
+import { createThemeController } from "./bench-kit/theme-controller";
+import type { Theme } from "./bench-kit/theme";
+import { WasmEngine } from "./bench-kit/wasm/wasm-engine";
+import { DEMO_DATASET } from "./demo-dataset";
+import { DiagramPane } from "./ui/diagram";
+import { DomUi } from "./ui/dom-ui";
+import { HistoryTab } from "./ui/history-tab";
+import { ImportModal, type ImportSelection } from "./ui/import-modal";
+import { SchemaPanel } from "./ui/schema-panel";
+
+/** The bench's DOM — moved verbatim from index.html; ids are the internal
+    wiring contract between this template and mount(). */
+export const BENCH_TEMPLATE = `
+<header class="top">
+  <span class="name">sql-workbench</span>
+  <span class="chip" id="dataset-chip" hidden></span>
+  <span class="spacer"></span>
+  <button class="ghost" id="import-btn" style="font-size:.75rem" title="Load your own CSV file and query it like any table">↑ Import CSV</button>
+  <button class="iconbtn" id="theme-toggle" aria-label="Toggle light or dark theme" title="Theme">◐</button>
+</header>
+
+<!-- Mobile-only view switcher (spec user story 17) -->
+<nav class="seg" aria-label="Bench sections">
+  <button type="button" data-seg="schema">Schema</button>
+  <button type="button" data-seg="query" class="on">Query</button>
+  <button type="button" data-seg="results">Results</button>
+  <button type="button" data-seg="diagram">Diagram</button>
+  <button type="button" data-seg="history">History</button>
+</nav>
+
+<div class="shell">
+  <aside class="schema" id="schema-panel" aria-label="Tables in this sample dataset"></aside>
+
+  <section class="main">
+    <div class="ed-tools">
+      <button class="run" id="run-btn">▸ Run query</button>
+      <button class="ghost" id="reset-btn" title="Restore the original sample data">Reset data</button>
+      <span class="spacer"></span>
+      <span class="kbd-hint"><kbd id="modkey">Ctrl</kbd>+<kbd>Enter</kbd> to run</span>
+    </div>
+
+    <div class="editor-wrap" id="editor-wrap">
+      <pre class="highlight-layer" id="highlight-layer" aria-hidden="true"><code class="highlight-code" id="highlight-code"></code></pre>
+      <textarea
+        id="editor"
+        class="editor"
+        spellcheck="false"
+        aria-label="SQL query"
+        placeholder="Type SQL, then press Ctrl+Enter…"
+      ></textarea>
+    </div>
+
+    <div class="tabs" role="tablist">
+      <button class="tab on" id="tab-results" role="tab" aria-selected="true">Results</button>
+      <button class="tab" id="tab-diagram" role="tab" aria-selected="false">Diagram</button>
+      <button class="tab" id="tab-history" role="tab" aria-selected="false">History <span id="history-count"></span></button>
+    </div>
+
+    <section id="results" class="pane on pane-results" aria-live="polite" aria-label="Query results"></section>
+
+    <section id="diagram-pane" class="pane diagram" aria-label="Database diagram"></section>
+
+    <section id="history-pane" class="pane jr" aria-label="Run history">
+      <div class="jr-tools">
+        <button class="ghost" id="export-btn" title="Download your runs as Markdown — paste it into any chat">↓ Export Markdown</button>
+      </div>
+      <div id="history-list"></div>
+      <div class="jr-note" id="history-empty">No runs yet — press Ctrl+Enter to run a query.</div>
+    </section>
+
+    <footer class="statusbar" id="statusbar">Ready</footer>
+  </section>
+</div>
+
+<div class="overlay" id="import-overlay">
+  <div class="modal">
+    <header>Import CSV</header>
+    <div class="body">
+      <div class="filemeta" id="import-filemeta">Reading file…</div>
+      <div class="preview-wrap"><table class="preview-table" id="import-preview"></table></div>
+      <div class="frow">
+        <label for="import-name">Table name</label>
+        <input type="text" id="import-name" spellcheck="false" />
+        <span class="kbd-hint">from filename — edit if you like</span>
+      </div>
+      <div class="frow">
+        <label for="import-delimiter">Delimiter</label>
+        <select id="import-delimiter">
+          <option value="," selected>comma ( , )</option>
+          <option value=";">semicolon ( ; )</option>
+          <option value="\\t">tab</option>
+        </select>
+        <label class="chk"><input type="checkbox" id="import-header" checked /> First row holds column names</label>
+      </div>
+      <div class="drop-hint">…or drop a .csv anywhere on the bench</div>
+      <div class="boot-error" id="import-error" hidden></div>
+    </div>
+    <footer>
+      <button class="ghost" id="import-cancel">Cancel</button>
+      <button class="run" id="import-go">Import</button>
+    </footer>
+  </div>
+</div>
+`.trim();
+
+export interface MountOptions {
+  /** "card" hides all chrome for embedded drill use (LEARN-205). */
+  mode?: string;
+  /** Explicit theme override; omit to follow the host (then the OS). */
+  theme?: Theme;
+  /** Storage namespace: two benches on one page get separate journals
+      and imported tables. Defaults to the standalone namespace. */
+  db?: string;
+  /** Fixture id to load instead of the built-in demo dataset. */
+  fixture?: string;
+  /** Inline the sqlite worker as a blob -- required for the single-file
+      component build (LEARN-194 distribution seam, spike-proven). */
+  inlineWorker?: boolean;
+  /** Called for every journaled event (query runs, resets, imports). */
+  onEvent?: (event: WorkbenchEvent) => void;
+}
+
+export interface WorkbenchHandle {
+  /** Run SQL as if typed into the editor; journaled like any run. */
+  run(sql: string): Promise<Outcome | undefined>;
+  /** Restore the current dataset's seed data. */
+  reset(): Promise<void>;
+  /** The whole session journal as Markdown. */
+  exportMarkdown(): Promise<string>;
+  /** Apply a theme now ('light' | 'dark'); overrides host-following. */
+  setTheme(theme: Theme): void;
+  /** Tear down listeners and the engine worker. */
+  dispose(): void;
+}
+
+export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHandle {
+  host.classList.add("bench");
+  host.dataset.view = "query";
+  host.innerHTML = BENCH_TEMPLATE;
+
+  const root: ParentNode = host;
+  const $ = <T extends HTMLElement>(id: string): T => {
+    const el = root.querySelector(`#${id}`);
+    if (!el) throw new Error(`missing #${id} — BENCH_TEMPLATE out of sync with mount()`);
+    return el as T;
+  };
+  // Focus tracking must see inside the shadow root: document.activeElement
+  // reports the host element, not the focused editor. Both Documents and
+  // ShadowRoots expose activeElement, so ask the bench's own root node.
+  const scope = host.getRootNode() as Document | ShadowRoot;
+  const activeElement = (): Element | null => scope.activeElement;
+
+  /* Theme: follows the host until explicitly set (LEARN-224-safe).
+     Controller lives in bench-kit -- see theme-controller.ts. */
+  const theme = createThemeController((t) => {
+    host.dataset.theme = t;
+  }, { initialExplicit: opts.theme ?? null });
+
+  $("theme-toggle").addEventListener("click", () => {
+    theme.set(host.dataset.theme === "dark" ? "light" : "dark");
+  });
+
+  /* ⌘ on Apple platforms, Ctrl elsewhere. */
+  {
+    const platform =
+      (navigator as Navigator & { userAgentData?: { platform?: string } }).userAgentData
+        ?.platform ?? navigator.platform;
+    if (/Mac|iPhone|iPad/i.test(platform)) $("modkey").textContent = "⌘";
+  }
+
+  /* Card mode (LEARN-205): embedded drill variant — chrome hides via CSS. */
+  if (opts.mode === "card") host.dataset.mode = "card";
+
+  const engine = WasmEngine.spawn({ inline: opts.inlineWorker ?? false });
+
+  /* Live schema names for did-you-mean suggestions on SQL errors. */
+  let schemaContext: { tables: string[]; columns: string[] } = { tables: [], columns: [] };
+
+  const ui = new DomUi($("run-btn"), $("results"), $("statusbar"), () => schemaContext);
+  const bench = new Bench(engine, ui);
+  const editor = $<HTMLTextAreaElement>("editor");
+  const resetButton = $<HTMLButtonElement>("reset-btn");
+
+  /* --- Syntax highlighting (LEARN-210): transparent textarea over a
+     colored twin. Programmatic .value swaps don't fire input, so every
+     prefill path calls refreshHighlight() explicitly. */
+  const highlightLayer = $("highlight-layer");
+  const highlightCode = $("highlight-code");
+
+  function refreshHighlight(): void {
+    highlightCode.replaceChildren(
+      ...highlightSql(editor.value).map((token) => {
+        const span = document.createElement("span");
+        span.className = `tok-${token.kind}`;
+        span.textContent = token.text;
+        return span;
+      }),
+      // The textarea reserves one line past a trailing newline; match it
+      // so vertical scroll and caret position never drift apart.
+      document.createTextNode("\n"),
+    );
+    highlightLayer.scrollTop = editor.scrollTop;
+  }
+
+  editor.addEventListener("input", refreshHighlight);
+  editor.addEventListener("scroll", () => {
+    highlightLayer.scrollTop = editor.scrollTop;
+    highlightLayer.scrollLeft = editor.scrollLeft;
+  });
+
+  /* Track the editor caret so schema-panel clicks insert where the learner
+     was looking — not wherever the textarea's stale focus state points.
+     The tracked offsets carry the value length they were seen at: if the
+     value has since changed programmatically (boot/reset), they are stale
+     and we fall back to appending at the end. */
+  let caret: { start: number; end: number; len: number } | null = null;
+  function rememberCaret(): void {
+    if (activeElement() === editor) {
+      caret = {
+        start: editor.selectionStart ?? 0,
+        end: editor.selectionEnd ?? 0,
+        len: editor.value.length,
+      };
+    }
+  }
+  for (const event of ["keyup", "mouseup", "touchend", "input", "focus"] as const) {
+    editor.addEventListener(event, rememberCaret);
+  }
+
+  /**
+   * Insert an identifier at the remembered caret (default: append), keeping
+   * it from gluing onto neighbouring tokens: "SELECT⎮FROM" + region →
+   * "SELECT region FROM". Focus returns to the editor with the caret just
+   * after the inserted name so typing continues seamlessly.
+   */
+  function insertIdentifier(identifier: string): void {
+    const value = editor.value;
+    const tracked = caret && caret.len === value.length ? caret : null;
+    const { start, end } = tracked ?? { start: value.length, end: value.length };
+    const charBefore = value[start - 1] ?? "";
+    const charAfter = value[end] ?? "";
+    // Pad so the identifier never glues onto neighbouring tokens:
+    // "SELECT|FROM" + region → "SELECT region FROM", but "o.|region" stays
+    // "o.region" and trailing spaces/commas are left alone.
+    const padBefore = /[\w"'\]);]/.test(charBefore) ? " " : "";
+    const padAfter = /[\w"']/.test(charAfter) ? " " : "";
+
+    const inserted = `${padBefore}${identifier}${padAfter}`;
+    editor.setRangeText(inserted, start, end, "end");
+    const newCaret = start + inserted.length;
+    caret = { start: newCaret, end: newCaret, len: editor.value.length };
+    editor.focus();
+    editor.setSelectionRange(newCaret, newCaret);
+    refreshHighlight(); // setRangeText doesn't fire input
+  }
+
+  const namespace = opts.db;
+  const schemaPanel = new SchemaPanel($("schema-panel"), insertIdentifier, (name) => {
+    void removeImportedTable(name);
+  });
+  const diagramPane = new DiagramPane($("diagram-pane"), insertIdentifier);
+
+  /* --- Journal + History (LEARN-203) ---------------------------------- */
+
+  const journalPromise = openJournal(namespace);
+  const history = new HistoryTab($("history-list"), $("history-count"), $("history-empty"));
+
+  /* The one place "which dataset is loaded" lives: slug id for journal
+     events, display title, and the statements Reset re-executes. */
+  let currentDataset: { id: string; title: string; seedStatements: string[] } = {
+    id: DEMO_DATASET.title,
+    title: DEMO_DATASET.title,
+    seedStatements: DEMO_DATASET.statements,
+  };
+
+  /** Journal an event, then bring the History tab back in sync. */
+  async function recordEvent(event: WorkbenchEvent): Promise<void> {
+    const journal = await journalPromise;
+    await journal.append(event);
+    await history.refresh(await journal.list());
+    opts.onEvent?.(event);
+  }
+
+  async function recordQuery(sql: string, outcome: Outcome): Promise<void> {
+    const base = { id: crypto.randomUUID(), ts: Date.now(), fixture: currentDataset.id };
+    await recordEvent(
+      outcome.kind === "ok"
+        ? { ...base, type: "query", sql, ok: true, rows: outcome.rowCount, ms: outcome.ms }
+        : { ...base, type: "query", sql, ok: false, error: outcome.message },
+    );
+  }
+
+  /** Submit what's in the editor; blank is a no-op; journaled immediately. */
+  async function run(sql: string): Promise<Outcome | undefined> {
+    const outcome = await bench.submit(sql);
+    // Blank queries are a no-op; real runs land in the journal immediately.
+    if (outcome) await recordQuery(sql.trim(), outcome);
+    return outcome;
+  }
+
+  $("run-btn").addEventListener("click", () => void run(editor.value));
+  host.addEventListener("keydown", (event) => {
+    if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+      event.preventDefault();
+      void run(editor.value);
+    }
+  });
+
+  /* Tabs (desktop) + segments (mobile) switch views together. */
+  function selectView(view: string, active: Element): void {
+    host.dataset.view = view;
+    const isHistory = view === "history";
+    const isResults = view === "results";
+    const isDiagram = view === "diagram";
+    $("tab-results").classList.toggle("on", !isHistory && !isDiagram);
+    $("tab-diagram").classList.toggle("on", isDiagram);
+    $("tab-history").classList.toggle("on", isHistory);
+    for (const tab of ["tab-results", "tab-diagram", "tab-history"]) {
+      $(tab).setAttribute("aria-selected", String($(tab).classList.contains("on")));
+    }
+    $("results").classList.toggle("on", isResults);
+    $("diagram-pane").classList.toggle("on", isDiagram);
+    $("history-pane").classList.toggle("on", isHistory);
+    if (isDiagram && diagramState.dirty) void renderDiagramNow();
+    for (const other of host.querySelectorAll("[data-seg]")) {
+      other.classList.toggle("on", other === active);
+    }
+  }
+  for (const button of host.querySelectorAll<HTMLButtonElement>("[data-seg]")) {
+    button.addEventListener("click", () => selectView(button.dataset.seg ?? "query", button));
+  }
+  $("tab-results").addEventListener("click", (e) => {
+    const seg = host.querySelector('[data-seg="results"]');
+    selectView("results", seg ?? e.currentTarget as Element);
+  });
+  $("tab-diagram").addEventListener("click", (e) => {
+    const seg = host.querySelector('[data-seg="diagram"]');
+    selectView("diagram", seg ?? e.currentTarget as Element);
+  });
+  $("tab-history").addEventListener("click", (e) => {
+    const seg = host.querySelector('[data-seg="history"]');
+    selectView("history", seg ?? e.currentTarget as Element);
+  });
+
+  /* Export Markdown — chat-paste-ready practice log. */
+  async function exportMarkdown(): Promise<string> {
+    const journal = await journalPromise;
+    return eventsToMarkdown(await journal.list());
+  }
+
+  $("export-btn").addEventListener("click", () => {
+    void (async () => {
+      const markdown = await exportMarkdown();
+      const blob = new Blob([markdown], { type: "text/markdown" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `sql-practice-${new Date().toISOString().slice(0, 10)}.md`;
+      link.click();
+      URL.revokeObjectURL(url);
+    })();
+  });
+
+  /* --- Boot: decide the dataset (opts.fixture or built-in demo), seed, introspect */
+
+  /**
+   * Re-run every persisted CSV import against the current database. Called
+   * after seeding on boot and on Reset — imported tables are the learner's
+   * own data, so they survive both. Failures KEEP the stored bytes (a
+   * transient error must not cost the learner their file); the table just
+   * doesn't appear this session.
+   */
+  async function replayImports(): Promise<void> {
+    const failed: string[] = [];
+    for (const table of await listImportedTables(namespace)) {
+      const outcome = await engine.run(
+        buildImportScript(table.name, parseCsv(table.csvText, {
+          delimiter: table.delimiter,
+          hasHeader: table.hasHeader,
+        })),
+      );
+      if (outcome.kind === "error") {
+        failed.push(table.name);
+        console.error(`[sql-workbench] could not restore imported table "${table.name}": ${outcome.message}`);
+      }
+    }
+    if (failed.length > 0) {
+      ui.setStatus(`Could not restore: ${failed.join(", ")} — see console`);
+    }
+  }
+
+  async function refreshSchema(datasetTitle: string): Promise<void> {
+    renderSchema(await loadSchema(engine), datasetTitle);
+  }
+
+  /* The diagram renders lazily: SVG text measurement returns 0 inside a
+     display:none pane, so we draw on first activation and re-draw when a
+     newer schema exists. */
+  const diagramState: { dirty: boolean; tables: Awaited<ReturnType<typeof loadSchema>> } = {
+    dirty: true,
+    tables: [],
+  };
+
+  async function renderDiagramNow(): Promise<void> {
+    try {
+      const relations = await loadRelations(engine);
+      diagramPane.render(layoutTables(diagramState.tables, relations), relations);
+      diagramState.dirty = false;
+    } catch (err) {
+      console.error("[sql-workbench] diagram failed", err);
+    }
+  }
+
+  /** Render with "yours" badges merged onto learner-imported tables. */
+  async function renderSchema(tables: Awaited<ReturnType<typeof loadSchema>>, datasetTitle: string): Promise<void> {
+    const mine = new Map((await listImportedTables(namespace)).map((t) => [t.name, t]));
+    const merged = tables.map((table) => {
+      const record = mine.get(table.name);
+      return record
+        ? { ...table, yours: true, yoursTitle: `${record.filename} · saved in this browser` }
+        : table;
+    });
+    schemaPanel.render(merged, datasetTitle);
+    diagramState.tables = merged;
+    schemaContext = {
+      tables: merged.map((t) => t.name),
+      columns: merged.flatMap((t) => t.columns.map((c) => c.name)),
+    };
+    diagramState.dirty = true;
+    if (host.dataset.view === "diagram") await renderDiagramNow();
+  }
+
+  // Boot is async (fixture fetch, seeding, introspection) but mount() is
+  // sync (custom elements connect synchronously). Failures fail loud:
+  // console + visible panel.
+  void (async () => {
+  try {
+    let starterQuery = DEMO_DATASET.sampleQuery;
+
+    if (opts.fixture) {
+      const fixture = await fetchFixture(opts.fixture); // throws plain-language FixtureError
+      currentDataset = { id: opts.fixture, title: fixture.title, seedStatements: [fixture.sql] };
+      starterQuery = ""; // filled from the loaded schema below
+    }
+
+    await engine.load(currentDataset.seedStatements);
+    await replayImports();
+    const tables = await loadSchema(engine);
+    await renderSchema(tables, currentDataset.title);
+
+    if (!starterQuery && tables[0]) {
+      starterQuery = `SELECT *\nFROM ${tables[0].name}\nLIMIT 10;`;
+    }
+    editor.value = starterQuery;
+    refreshHighlight();
+
+    const chip = $("dataset-chip");
+    chip.textContent = `${currentDataset.title} · sample data`;
+    chip.hidden = false;
+    const journal = await journalPromise;
+    await history.refresh(await journal.list());
+    editor.focus();
+  } catch (err) {
+    // Malformed/missing fixtures fail loud: console + visible panel.
+    console.error("[sql-workbench]", err);
+    ui.showBootError((err as Error)?.message ?? String(err));
+  }
+  })();
+
+  /* Reset data — re-executes the current seed deterministically.
+     The body lives in resetDataset (single reset path); the button is
+     the UI adapter for it, the handle re-exports it. */
+  const resetDataset = async (): Promise<void> => {
+    resetButton.disabled = true;
+    try {
+      await engine.load(currentDataset.seedStatements);
+      await replayImports();
+      await refreshSchema(currentDataset.title);
+      await recordEvent({
+        id: crypto.randomUUID(),
+        type: "dataset-reset",
+        ts: Date.now(),
+        fixture: currentDataset.id,
+      });
+      ui.setStatus("Sample data restored");
+    } catch (err) {
+      console.error("[sql-workbench] reset failed", err);
+      ui.setStatus("Reset failed — see console");
+    } finally {
+      resetButton.disabled = false;
+    }
+  };
+  resetButton.addEventListener("click", () => void resetDataset());
+
+  /* --- Import CSV (LEARN-204) ----------------------------------------- */
+
+  // Client-side guard only — protects the tab from multi-hundred-MB files.
+  // The Pharos-side dataset cap and its server enforcement are LEARN-206.
+  const MAX_CSV_BYTES = 50 * 1024 * 1024;
+  const MAX_CSV_MB = MAX_CSV_BYTES / (1024 * 1024);
+
+  const importModal = new ImportModal({
+    overlay: $("import-overlay"),
+    fileMeta: $("import-filemeta"),
+    preview: $("import-preview"),
+    nameInput: $<HTMLInputElement>("import-name"),
+    delimiterSelect: $<HTMLSelectElement>("import-delimiter"),
+    headerCheckbox: $<HTMLInputElement>("import-header"),
+    importButton: $<HTMLButtonElement>("import-go"),
+    cancelButton: $<HTMLButtonElement>("import-cancel"),
+    errorBox: $("import-error"),
+  });
+
+  async function executeImport(filename: string, selection: ImportSelection): Promise<void> {
+    // Importing replaces a previous version of YOUR table, but never a
+    // sample/fixture one — that would silently destroy seeded practice data.
+    const existing = await loadSchema(engine);
+    if (existing.some((t) => t.name === selection.tableName)) {
+      const mine = (await listImportedTables(namespace)).some((t) => t.name === selection.tableName);
+      if (!mine) {
+        throw new Error(
+          `"${selection.tableName}" is already used by the sample data — pick another table name.`,
+        );
+      }
+    }
+
+    const outcome = await engine.run(selection.script);
+    if (outcome.kind === "error") throw new Error(outcome.message); // shown in the modal
+
+    const record: ImportedTable = {
+      name: selection.tableName,
+      filename,
+      csvText: selection.csvText,
+      delimiter: selection.delimiter,
+      hasHeader: selection.hasHeader,
+      rows: selection.rows,
+      importedAt: Date.now(),
+    };
+    await saveImportedTable(record, namespace);
+    await recordEvent({
+      id: crypto.randomUUID(),
+      type: "csv-import",
+      ts: Date.now(),
+      name: selection.tableName,
+      rows: selection.rows,
+    });
+    await refreshSchema(currentDataset.title);
+
+    editor.value = `SELECT *\nFROM ${selection.tableName}\nLIMIT 10;`;
+    caret = null;
+    refreshHighlight();
+    ui.setStatus(
+      `Imported ${selection.rows.toLocaleString("en-US")} rows into ${selection.tableName}`,
+    );
+    selectView("results", host.querySelector('[data-seg="results"]') ?? host);
+    importModal.close();
+  }
+
+  async function openCsvFile(file: File): Promise<void> {
+    try {
+      if (file.size > MAX_CSV_BYTES) {
+        ui.setStatus(`CSV too large — the bench caps imports at ${MAX_CSV_MB} MB`);
+        return;
+      }
+      importModal.onExecute((selection) => executeImport(file.name, selection));
+      await importModal.openFor(file.name, await file.text());
+    } catch (err) {
+      console.error("[sql-workbench] could not read CSV file", err);
+      ui.setStatus(`Could not read ${file.name} — see console`);
+    }
+  }
+
+  $("import-btn").addEventListener("click", () => {
+    const picker = document.createElement("input");
+    picker.type = "file";
+    picker.accept = ".csv,text/csv,text/plain";
+    picker.addEventListener("change", () => {
+      const file = picker.files?.[0];
+      if (file) void openCsvFile(file);
+    });
+    picker.click();
+  });
+
+  /* Drop a .csv anywhere on the bench. */
+  let dragDepth = 0;
+  function dragEnter(event: DragEvent): void {
+    event.preventDefault();
+    dragDepth++;
+    host.classList.add("dragging");
+  }
+  function dragLeave(): void {
+    if (--dragDepth <= 0) {
+      dragDepth = 0;
+      host.classList.remove("dragging");
+    }
+  }
+  function dragOver(event: DragEvent): void {
+    event.preventDefault();
+  }
+  function drop(event: DragEvent): void {
+    event.preventDefault();
+    dragDepth = 0;
+    host.classList.remove("dragging");
+    const file = event.dataTransfer?.files?.[0];
+    if (file) void openCsvFile(file);
+  }
+  host.addEventListener("dragenter", dragEnter);
+  host.addEventListener("dragleave", dragLeave);
+  host.addEventListener("dragover", dragOver);
+  host.addEventListener("drop", drop);
+
+  /* ✕ on a "yours" table removes it and its stored bytes. */
+  async function removeImportedTable(name: string): Promise<void> {
+    if (!confirm(`Remove table "${name}"? Its saved CSV will be deleted too.`)) return;
+    const outcome = await engine.run(`DROP TABLE IF EXISTS "${name}";`);
+    if (outcome.kind === "error") {
+      console.error("[sql-workbench] drop failed", outcome.message);
+      ui.setStatus(`Could not remove ${name} — see console`);
+      return;
+    }
+    await deleteImportedTable(name, namespace);
+    await refreshSchema(currentDataset.title);
+    ui.setStatus(`Removed ${name}`);
+  }
+
+  /* ── Handle ─────────────────────────────────────────────────────────── */
+
+  return {
+    async run(sql: string) {
+      editor.value = sql;
+      caret = null;
+      refreshHighlight();
+      const outcome = await bench.submit(sql);
+      // Blank queries are a no-op; real runs land in the journal immediately.
+      if (outcome) await recordQuery(sql.trim(), outcome);
+      return outcome;
+    },
+    reset: () => resetDataset(),
+    exportMarkdown,
+    setTheme(t: Theme) {
+      theme.set(t);
+    },
+    dispose() {
+      theme.dispose();
+      host.classList.remove("bench", "dragging");
+      delete host.dataset.theme;
+      delete host.dataset.mode;
+      delete host.dataset.view;
+      host.innerHTML = "";
+      engine.dispose();
+    },
+  };
+}

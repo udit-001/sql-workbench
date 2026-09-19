@@ -3,9 +3,14 @@
  * bench persistence (journal events, imported-CSV bytes). Falls back to
  * an in-memory map when IndexedDB is unavailable so features degrade
  * instead of dying.
+ *
+ * Namespace: each mount passes a storage namespace (the component's
+ * `db` attribute). Two benches on one page must not share journals or
+ * imported tables — same-origin IndexedDB is global, so the namespace
+ * becomes the database name.
  */
 
-const DB_NAME = "sql-workbench";
+const DEFAULT_NAMESPACE = "sql-workbench";
 const DB_VERSION = 1;
 const STORE = "kv";
 
@@ -15,15 +20,15 @@ interface KvBackend {
   delete(key: string): Promise<void>;
 }
 
-let backendPromise: Promise<KvBackend> | null = null;
+const backends = new Map<string, Promise<KvBackend>>();
 
-async function openIdb(): Promise<IDBDatabase> {
+async function openIdb(namespace: string): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     if (typeof indexedDB === "undefined") {
       reject(new Error("IndexedDB not available"));
       return;
     }
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    const request = indexedDB.open(namespace, DB_VERSION);
     request.onupgradeneeded = () => {
       const db = request.result;
       if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);
@@ -73,13 +78,17 @@ function idbBackend(db: IDBDatabase): KvBackend {
   };
 }
 
-/** Opens (once) the shared store; memory fallback keeps the app usable. */
-export async function openKv(): Promise<KvBackend> {
-  backendPromise ??= openIdb()
-    .then(idbBackend)
-    .catch((err) => {
-      console.warn("[sql-workbench] IndexedDB unavailable — data will not persist", err);
-      return memoryBackend();
-    });
-  return backendPromise;
+/** Opens (once per namespace) the shared store; memory fallback keeps the app usable. */
+export function openKv(namespace: string = DEFAULT_NAMESPACE): Promise<KvBackend> {
+  let backend = backends.get(namespace);
+  if (!backend) {
+    backend = openIdb(namespace)
+      .then(idbBackend)
+      .catch((err) => {
+        console.warn("[sql-workbench] IndexedDB unavailable — data will not persist", err);
+        return memoryBackend();
+      });
+    backends.set(namespace, backend);
+  }
+  return backend;
 }
