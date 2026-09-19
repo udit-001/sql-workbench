@@ -11,6 +11,8 @@ const bench = document.createElement("sql-workbench");
 if (params.get("mode")) bench.setAttribute("mode", params.get("mode")!);
 const fixtureParam = params.get("dataset") ?? params.get("fixture");
 if (fixtureParam) bench.setAttribute("dataset", fixtureParam);
+const sqlParam = params.get("sql");
+if (sqlParam) bench.setAttribute("sql", sqlParam);
 const dbParam = params.get("namespace") ?? params.get("db");
 if (dbParam) bench.setAttribute("namespace", dbParam);
 document.body.append(bench);

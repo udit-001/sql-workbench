@@ -134,6 +134,11 @@ export interface MountOptions {
   namespace?: string;
   /** Dataset id to load instead of the built-in demo dataset. */
   dataset?: string;
+  /** Boot-time editor prefill ("starter query"). Wins over the dataset-
+      derived and demo defaults; set once at connect — post-connect control
+      is run(). Prefilling is not an action: nothing is journaled, and an
+      invalid query surfaces through the learner's own run. */
+  sql?: string;
   /** Called for every journaled event (query runs, resets, imports). */
   onEvent?: (event: WorkbenchEvent) => void;
 }
@@ -453,13 +458,15 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
   // console + visible panel.
   void (async () => {
   try {
-    let starterQuery = DEMO_DATASET.sampleQuery;
+    // Boot query precedence: explicit sql attr > dataset-derived > demo sample.
+    let starterQuery: string | null = opts.sql ?? null;
 
     if (opts.dataset) {
       const fixture = await fetchFixture(opts.dataset); // throws plain-language FixtureError
       currentDataset = { id: opts.dataset, title: fixture.title, seedStatements: [fixture.sql] };
-      starterQuery = ""; // filled from the loaded schema below
+      starterQuery = null; // filled from the loaded schema below
     }
+    if (starterQuery === null) starterQuery = DEMO_DATASET.sampleQuery;
 
     await engine.load(currentDataset.seedStatements);
     await replayImports();

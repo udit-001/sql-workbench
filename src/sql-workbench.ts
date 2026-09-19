@@ -35,6 +35,7 @@ export class SqlWorkbench extends HTMLElement {
     // `db`/`fixture` are deprecated aliases from the v0.2 API.
     const ns = this.getAttribute("namespace") ?? this.getAttribute("db");
     const dataset = this.getAttribute("dataset") ?? this.getAttribute("fixture");
+    const sql = this.getAttribute("sql");
     // Mirror the resolved theme onto the element: :host([data-theme]) is
     // where the token blocks live, so integrators can out-vote any dark
     // default from their own element styles.
@@ -49,6 +50,7 @@ export class SqlWorkbench extends HTMLElement {
       ...(theme === "light" || theme === "dark" ? { theme: theme as Theme } : {}),
       ...(ns ? { namespace: ns } : {}),
       ...(dataset ? { dataset } : {}),
+      ...(sql ? { sql } : {}),
       onEvent: (event) => {
         this.dispatchEvent(new CustomEvent("workbench-event", { detail: event }));
       },

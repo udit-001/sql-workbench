@@ -38,6 +38,7 @@ Prefer vendoring? Download `sql-workbench.js` from the [releases](https://github
 | `theme` | `light` \| `dark` | explicit override; omit to follow the host page (live-reactive) |
 | `namespace` | any name | private data space for this bench: its own journal and imported tables (read at connect) |
 | `dataset` | dataset id | load a named dataset instead of the built-in demo (read at connect) |
+| `sql` | SQL text | boot-time editor prefill; beats the dataset-derived default (read at connect) |
 
 ### API
 
