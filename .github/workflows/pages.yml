@@ -1,0 +1,44 @@
+# The docs + demo site (GitHub Pages). Pulls the LATEST RELEASED component
+# file — docs changes deploy on every main push without touching versions;
+# component changes reach Pages only after a release is cut (release.yml).
+name: Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Download latest released component
+        run: |
+          mkdir -p dist
+          gh release download --repo "$GITHUB_REPOSITORY" --pattern "sql-workbench.js" --output dist/sql-workbench.js
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - name: Assemble docs site
+        run: npm run build:docs
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - id: deployment
+        uses: actions/deploy-pages@v4

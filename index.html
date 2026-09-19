@@ -108,6 +108,7 @@
       .toc a { color: var(--page-accent); text-decoration: none; }
     </style>
     <script type="module" src="/src/main.ts"></script>
+    <script type="module" src="/src/docs.ts"></script>
   </head>
   <body>
     <div class="wrap">
@@ -147,7 +148,7 @@
       <h2 id="quick-start">Add it to your page</h2>
       <p class="desc">One script, one element. The file is ~1.5 MB (614 KB gzipped) and makes
         zero side requests — the SQLite engine, worker and all, is inside it.</p>
-<pre><code>&lt;script type="module"
+<pre data-copy><code>&lt;script type="module"
         src="https://cdn.jsdelivr.net/gh/udit-001/sql-workbench@v0.2/dist/sql-workbench.js"&gt;&lt;/script&gt;
 
 &lt;sql-workbench namespace="my-app" style="display:block;height:560px"&gt;&lt;/sql-workbench&gt;</code></pre>
@@ -171,7 +172,7 @@
         try the ◐ button in the header: both benches above and below flip with the page.
         For a full rebrand, override design tokens on the element; they win even against dark mode:
       </p>
-<pre><code>sql-workbench {
+<pre data-copy><code>sql-workbench {
   --wb-bg: #24283b; --wb-surface: #1f2335; --wb-accent: #bb9af7;
   --wb-text: #c0caf5; --wb-heading: #7aa2f7; --wb-border: #414868;
 }
@@ -191,7 +192,7 @@ sql-workbench::part(run-button) { border-radius: 999px; }</code></pre>
         gives each one a private journal and private imported tables — one per lesson, per user
         task, or per tab:
       </p>
-<pre><code>&lt;sql-workbench namespace="lesson-1"&gt;&lt;/sql-workbench&gt;
+<pre data-copy><code>&lt;sql-workbench namespace="lesson-1"&gt;&lt;/sql-workbench&gt;
 &lt;sql-workbench namespace="lesson-2"&gt;&lt;/sql-workbench&gt;</code></pre>
 
       <h2 id="starter">Start learners mid-thought</h2>
@@ -207,7 +208,7 @@ sql-workbench::part(run-button) { border-radius: 999px; }</code></pre>
         Every query, import, and reset is journaled. Get them live as DOM events, read the
         whole journal on demand, or export it as Markdown:
       </p>
-<pre><code>bench.addEventListener("workbench-event", (e) =&gt; {
+<pre data-copy><code>bench.addEventListener("workbench-event", (e) =&gt; {
   // e.detail: { type: "query" | "csv-import" | "dataset-reset", sql, ok, rows, ms, error … }
 });
 

@@ -1,0 +1,33 @@
+# A release = a pinned component artifact (jsDelivr tags + release downloads
+# + Pharos vendoring all point here). Cut deliberately: bump the version,
+# tag v*, this workflow tests, builds the single file, and attaches it.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: component-js
+          path: dist/sql-workbench.js
+      - name: Attach component to release
+        run: gh release create "$GITHUB_REF_NAME" dist/sql-workbench.js --generate-notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
