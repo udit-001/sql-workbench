@@ -217,7 +217,7 @@ function markerDefs(): Element {
   const defs = document.createElementNS(SVG_NS, "defs");
   defs.innerHTML =
     `<marker id="fk-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">` +
-    `<polygon points="0 0, 8 3, 0 6" fill="var(--muted)"/></marker>`;
+    `<polygon points="0 0, 8 3, 0 6" fill="var(--wb-muted)"/></marker>`;
   return defs;
 }
 

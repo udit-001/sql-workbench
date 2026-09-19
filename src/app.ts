@@ -50,12 +50,12 @@ export const BENCH_TEMPLATE = `
 </nav>
 
 <div class="shell">
-  <aside class="schema" id="schema-panel" aria-label="Tables in this sample dataset"></aside>
+  <aside class="schema" part="schema" id="schema-panel" aria-label="Tables in this sample dataset"></aside>
 
   <section class="main">
     <div class="ed-tools">
-      <button class="run" id="run-btn">▸ Run query</button>
-      <button class="ghost" id="reset-btn" title="Restore the original sample data">Reset data</button>
+      <button class="run" part="run-button" id="run-btn">▸ Run query</button>
+      <button class="ghost" part="reset-button" id="reset-btn" title="Restore the original sample data">Reset data</button>
       <span class="spacer"></span>
       <span class="kbd-hint"><kbd id="modkey">Ctrl</kbd>+<kbd>Enter</kbd> to run</span>
     </div>
@@ -63,7 +63,7 @@ export const BENCH_TEMPLATE = `
     <div class="editor-wrap" id="editor-wrap">
       <pre class="highlight-layer" id="highlight-layer" aria-hidden="true"><code class="highlight-code" id="highlight-code"></code></pre>
       <textarea
-        id="editor"
+        part="editor" id="editor"
         class="editor"
         spellcheck="false"
         aria-label="SQL query"
@@ -77,11 +77,11 @@ export const BENCH_TEMPLATE = `
       <button class="tab" id="tab-history" role="tab" aria-selected="false">History <span id="history-count"></span></button>
     </div>
 
-    <section id="results" class="pane on pane-results" aria-live="polite" aria-label="Query results"></section>
+    <section part="results" id="results" class="pane on pane-results" aria-live="polite" aria-label="Query results"></section>
 
-    <section id="diagram-pane" class="pane diagram" aria-label="Database diagram"></section>
+    <section part="diagram" id="diagram-pane" class="pane diagram" aria-label="Database diagram"></section>
 
-    <section id="history-pane" class="pane jr" aria-label="Run history">
+    <section part="history" id="history-pane" class="pane jr" aria-label="Run history">
       <div class="jr-tools">
         <button class="ghost" id="export-btn" title="Download your runs as Markdown — paste it into any chat">↓ Export Markdown</button>
       </div>
@@ -89,7 +89,7 @@ export const BENCH_TEMPLATE = `
       <div class="jr-note" id="history-empty">No runs yet — press Ctrl+Enter to run a query.</div>
     </section>
 
-    <footer class="statusbar" id="statusbar">Ready</footer>
+    <footer class="statusbar" part="statusbar" id="statusbar">Ready</footer>
   </section>
 </div>
 

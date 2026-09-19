@@ -1,4 +1,4 @@
-const VA = '.bench{--bg: #ffffff;--surface: #eceff4;--border: #e5e9f0;--divider: #d8dee9;--text: #4c566a;--strong: #3b4252;--heading: #2e3440;--muted: #8891a0;--accent: #5e81ac;--ok: #4a7a2e;--err: #bf4e5a;--err-bg: #fce4e4;--mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;--kw: #5e81ac;--str: #a3be8c;--num: #b48ead;--com: #8891a0}.bench[data-theme=dark]{--bg: #3b4252;--surface: #2e3440;--border: #434c5e;--divider: #4c566a;--text: #aebbcf;--strong: #d8dee9;--heading: #eceff4;--muted: #81a1c1;--accent: #81a1c1;--ok: #95c088;--err: #e8a0a0;--err-bg: #4c566a;--kw: #81a1c1;--str: #a3be8c;--num: #b48ead;--com: #94adcb}*{box-sizing:border-box;margin:0}.bench{background:var(--bg);color:var(--text);font:15px/1.5 Inter,system-ui,sans-serif;height:100%;position:relative;display:flex;flex-direction:column}button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}.spacer{flex:1}.top{display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid var(--border);flex:none}.top .name{font-weight:600;color:var(--heading);font-size:.9rem}.chip{font-size:.75rem;color:var(--muted);background:var(--surface);border-radius:6px;padding:2px 8px}.iconbtn{padding:4px 8px;border-radius:6px;color:var(--text)}.iconbtn:hover{background:var(--surface)}.shell{display:flex;flex:1;min-height:0}.schema{width:230px;flex:none;border-right:1px solid var(--border);overflow-y:auto;padding:10px}.main{flex:1;display:flex;flex-direction:column;min-width:0}.ds-label{font-size:.6875rem;font-weight:500;letter-spacing:.04em;color:var(--muted);margin:4px 0 6px}.tbl{border-radius:6px;margin-bottom:2px}.tbl>button{display:flex;width:100%;align-items:center;gap:6px;padding:5px 6px;font-size:.85rem;color:var(--strong);border-radius:6px;text-align:left}.tbl>button:hover{background:var(--surface)}.tbl .chev{transition:transform .15s;font-size:.65rem;color:var(--muted)}.tbl.open .chev{transform:rotate(90deg)}.cols{display:none;padding:0 6px 6px 20px}.tbl.open .cols{display:block}.col{display:flex;justify-content:space-between;align-items:baseline;gap:8px;width:100%;font-family:var(--mono);font-size:.75rem;padding:2px 4px;color:var(--text);border-radius:4px;text-align:left}.col:hover{color:var(--accent);background:var(--surface)}.col .ty{color:var(--muted);font-size:.7rem}.schema-empty{font-size:.75rem;color:var(--muted);line-height:1.5}.ed-tools{display:flex;align-items:center;gap:8px;padding:6px 10px;border-bottom:1px solid var(--border);flex:none}.run{background:var(--accent);color:#fff;font-size:.8rem;font-weight:500;padding:5px 14px;border-radius:8px}.run:hover:not(:disabled){opacity:.9}.run:disabled{opacity:.6;cursor:default}.kbd-hint{font-size:.72rem;color:var(--muted)}kbd{font-family:var(--mono);font-size:.68rem;background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:0 4px}.editor-wrap{position:relative;flex:none;height:26vh;min-height:110px;resize:vertical;overflow:hidden;border-bottom:1px solid var(--border)}.highlight-layer,.editor{margin:0;padding:14px 16px;font-family:var(--mono);font-size:.85rem;line-height:1.6;tab-size:4;white-space:pre-wrap;overflow-wrap:break-word;border:none}.highlight-layer{position:absolute;inset:0;overflow:hidden;pointer-events:none;color:var(--strong)}.highlight-code{font:inherit;letter-spacing:inherit}.tok-keyword{color:var(--kw);font-weight:600}.tok-string{color:var(--str)}.tok-number{color:var(--num)}.tok-comment{color:var(--com);font-style:italic}.editor{position:absolute;inset:0;width:100%;height:100%;resize:none;outline:none;background:transparent;color:transparent;caret-color:var(--accent)}.editor::selection{background:#5e81ac59}.bench[data-theme=dark] .editor::selection{background:#88c0d04d}.tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);padding:0 10px;flex:none;background:var(--surface)}.tab{font-size:.8rem;padding:7px 12px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}.tab.on{color:var(--strong);border-bottom-color:var(--accent);font-weight:500}.pane{flex:1;overflow:auto;min-height:0;display:none}.pane.on{display:block}.pane-results{flex:1}table.grid{border-collapse:collapse;width:100%;font-size:.82rem}.grid th{position:sticky;top:0;background:var(--surface);color:var(--strong);text-align:left;font-weight:600;padding:7px 14px;border-bottom:1px solid var(--divider);white-space:nowrap}.grid td{padding:6px 14px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:.78rem;white-space:nowrap}.grid tr:hover td{background:var(--surface)}.null{color:var(--muted);font-style:italic}.error-panel{margin:10px 14px;padding:10px 12px;border:1px solid var(--err);border-radius:8px;background:var(--err-bg);color:var(--heading);display:flex;gap:10px;align-items:baseline;font-size:.82rem}.error-label{flex:none;font-weight:600;color:var(--err);font-size:.72rem;text-transform:uppercase;letter-spacing:.04em}.error-hint-title{font-weight:600;color:var(--heading);margin-bottom:4px}.error-suggestion{color:var(--text)}.error-panel .error-original code,.error-panel .error-toggle{color:var(--strong)}.error-panel .error-label{color:#8f3541}.bench[data-theme=dark] .error-panel .error-original code,.bench[data-theme=dark] .error-panel .error-toggle,.bench[data-theme=dark] .error-panel .error-suggestion{color:var(--heading)}.bench[data-theme=dark] .error-panel .error-label{color:#f2c1c7}.error-original code{font-size:.75rem;white-space:pre-wrap}.error-toggle{margin-top:8px;font-size:.72rem;text-decoration:underline;text-underline-offset:2px}.error-toggle:hover{text-decoration-thickness:2px}.error-toggle:focus-visible{outline:2px solid var(--accent);outline-offset:2px}.bench[data-mode=card] .error-toggle{display:none}.error-panel code,.boot-error{font-family:var(--mono);white-space:pre-wrap}.ghost{font-size:.78rem;color:var(--muted);padding:5px 10px;border:1px solid var(--border);border-radius:8px}.ghost:hover:not(:disabled){border-color:var(--divider);color:var(--text)}.ghost:disabled{opacity:.5;cursor:default}.statusbar{flex:none;padding:5px 14px;border-top:1px solid var(--border);font-size:.72rem;color:var(--muted)}.diagram{padding:16px;overflow:auto;background:radial-gradient(rgba(76,86,106,.14) 1px,transparent 1px);background-size:20px 20px}.diagram-svg{display:block}.diagram-box{fill:var(--bg);stroke:var(--strong);stroke-width:1}.diagram-box-header{fill:var(--surface)}.diagram-hairline{stroke:var(--divider);stroke-width:1}.diagram-title{font-family:Inter,system-ui,sans-serif;font-size:12px;font-weight:600;fill:var(--heading)}.diagram-tag-text{font-family:var(--mono);font-size:9px;letter-spacing:.06em;fill:var(--muted)}.diagram-column{font-family:var(--mono);font-size:11px;fill:var(--text)}.diagram-column:hover{fill:var(--accent)}.diagram-type{font-family:var(--mono);font-size:9px;fill:var(--muted)}.diagram-chip{fill:none;stroke:var(--muted);stroke-width:.8}.diagram-chip-text{font-family:var(--mono);font-size:8px;letter-spacing:.08em;fill:var(--muted)}.diagram-row-zebra{fill:var(--surface);opacity:.5}.diagram-more{font-family:var(--mono);font-size:9px;fill:var(--muted);font-style:italic}.diagram-edge{stroke:var(--muted);stroke-width:1}.jr{padding:8px 14px;font-size:.78rem}.jr-tools{display:flex;justify-content:flex-end;padding-bottom:6px}.jr-row{display:flex;gap:10px;padding:6px 0;border-bottom:1px solid var(--border);align-items:baseline}.dot{flex:none;width:8px;height:8px;border-radius:50%}.dot.ok{background:var(--ok)}.dot.err{background:var(--err)}.dot.reset{background:transparent;border:1.5px dashed var(--muted)}.jr-sql{font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:55%}.jr-failed{color:var(--err)}.jr-meta{color:var(--muted);font-size:.72rem;margin-left:auto;white-space:nowrap}.jr-note{padding-top:8px;color:var(--muted);font-size:.72rem;line-height:1.5}.badge-you{font-size:.62rem;color:var(--accent);border:1px solid currentColor;border-radius:4px;padding:0 4px}.col-del{visibility:hidden;color:var(--err);cursor:pointer;margin-left:6px;padding:0 2px}.tbl:hover .col-del,.tbl.open .col-del{visibility:visible}.overlay{position:absolute;inset:0;background:#0006;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:50}.overlay.on{display:flex}.modal{background:var(--bg);border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 32px #0000002e;width:min(520px,92vw);max-height:86vh;display:flex;flex-direction:column;font-size:.85rem}.modal header{padding:12px 16px;border-bottom:1px solid var(--border);font-weight:600;color:var(--heading)}.modal .body{padding:14px 16px;overflow:auto}.modal footer{padding:12px 16px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}.filemeta{color:var(--muted);font-size:.78rem;margin-bottom:10px}.preview-wrap{border:1px solid var(--border);border-radius:8px;overflow:auto;margin-bottom:14px;max-height:200px}table.preview-table{border-collapse:collapse;width:100%;font-size:.76rem}.preview-table th{position:sticky;top:0;background:var(--surface);color:var(--strong);text-align:left;padding:5px 10px;border-bottom:1px solid var(--divider);font-family:var(--mono);white-space:nowrap}.preview-table td{padding:4px 10px;border-bottom:1px solid var(--border);font-family:var(--mono);white-space:nowrap}.frow{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}.frow label{font-size:.8rem;color:var(--strong);min-width:88px}.frow input[type=text]{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--heading);font-family:var(--mono);font-size:.8rem}.frow select{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text)}.frow .chk{display:flex;align-items:center;gap:6px;font-size:.8rem;color:var(--text);min-width:0}.drop-hint{font-size:.72rem;color:var(--muted);margin-top:10px;text-align:center}.bench.dragging:after{content:"Drop your CSV to import it";position:absolute;inset:10px;border:2px dashed var(--accent);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1rem;color:var(--accent);background:color-mix(in srgb,var(--bg) 80%,transparent);z-index:60;pointer-events:none}.bench[data-mode=card]{font-size:14px}.bench[data-mode=card] .top,.bench[data-mode=card] .schema,.bench[data-mode=card] .seg,.bench[data-mode=card] .tabs,.bench[data-mode=card] .statusbar,.bench[data-mode=card] .kbd-hint{display:none!important}.bench[data-mode=card] .ed-tools{padding:5px 10px;border-bottom:1px solid var(--border)}.bench[data-mode=card] #reset-btn{order:-1;font-size:.74rem;padding:3px 8px}.bench[data-mode=card] #run-btn{font-size:.78rem;padding:4px 13px}.bench[data-mode=card] .editor-wrap{height:auto;min-height:88px;max-height:40vh;resize:none}.bench[data-mode=card] .highlight-layer,.bench[data-mode=card] .editor{font-size:.83rem;line-height:1.6}.seg{display:none}@media(max-width:720px){.schema,.pane-results,.statusbar,.ed-tools,.editor-wrap{display:none}.seg{display:flex;gap:4px;padding:6px 10px;border-bottom:1px solid var(--border);background:var(--surface);flex:none}.seg button{flex:1;font-size:.8rem;padding:6px;border-radius:6px;color:var(--muted)}.seg button.on{background:var(--bg);color:var(--strong);font-weight:500;border:1px solid var(--border)}.bench[data-view=schema] .schema{display:block;width:100%;border-right:none}.bench[data-view=schema] .main{display:none}.bench[data-view=query] .editor{display:block}.bench[data-view=query] .ed-tools{display:flex}.bench[data-view=results] .pane-results,.bench[data-view=results] .statusbar,.bench[data-view=diagram] #diagram-pane{display:block}.tabs{display:none!important}.bench[data-view=history] #history-pane{display:block}}.boot-error{margin:10px 14px;padding:10px 12px;border:1px dashed var(--err);border-radius:8px;font-size:.8rem;line-height:1.6}';
+const VA = ':host{--wb-bg: #ffffff;--wb-surface: #eceff4;--wb-border: #e5e9f0;--wb-divider: #d8dee9;--wb-text: #4c566a;--wb-strong: #3b4252;--wb-heading: #2e3440;--wb-muted: #8891a0;--wb-accent: #5e81ac;--wb-ok: #4a7a2e;--wb-err: #bf4e5a;--wb-err-bg: #fce4e4;--wb-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;--wb-kw: #5e81ac;--wb-str: #a3be8c;--wb-num: #b48ead;--wb-com: #8891a0}:host([data-theme="dark"]){--wb-bg: #3b4252;--wb-surface: #2e3440;--wb-border: #434c5e;--wb-divider: #4c566a;--wb-text: #aebbcf;--wb-strong: #d8dee9;--wb-heading: #eceff4;--wb-muted: #81a1c1;--wb-accent: #81a1c1;--wb-ok: #95c088;--wb-err: #e8a0a0;--wb-err-bg: #4c566a;--wb-kw: #81a1c1;--wb-str: #a3be8c;--wb-num: #b48ead;--wb-com: #94adcb}*{box-sizing:border-box;margin:0}.bench{background:var(--wb-bg);color:var(--wb-text);font:15px/1.5 Inter,system-ui,sans-serif;height:100%;position:relative;display:flex;flex-direction:column}button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}.spacer{flex:1}.top{display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid var(--wb-border);flex:none}.top .name{font-weight:600;color:var(--wb-heading);font-size:.9rem}.chip{font-size:.75rem;color:var(--wb-muted);background:var(--wb-surface);border-radius:6px;padding:2px 8px}.iconbtn{padding:4px 8px;border-radius:6px;color:var(--wb-text)}.iconbtn:hover{background:var(--wb-surface)}.shell{display:flex;flex:1;min-height:0}.schema{width:230px;flex:none;border-right:1px solid var(--wb-border);overflow-y:auto;padding:10px}.main{flex:1;display:flex;flex-direction:column;min-width:0}.ds-label{font-size:.6875rem;font-weight:500;letter-spacing:.04em;color:var(--wb-muted);margin:4px 0 6px}.tbl{border-radius:6px;margin-bottom:2px}.tbl>button{display:flex;width:100%;align-items:center;gap:6px;padding:5px 6px;font-size:.85rem;color:var(--wb-strong);border-radius:6px;text-align:left}.tbl>button:hover{background:var(--wb-surface)}.tbl .chev{transition:transform .15s;font-size:.65rem;color:var(--wb-muted)}.tbl.open .chev{transform:rotate(90deg)}.cols{display:none;padding:0 6px 6px 20px}.tbl.open .cols{display:block}.col{display:flex;justify-content:space-between;align-items:baseline;gap:8px;width:100%;font-family:var(--wb-mono);font-size:.75rem;padding:2px 4px;color:var(--wb-text);border-radius:4px;text-align:left}.col:hover{color:var(--wb-accent);background:var(--wb-surface)}.col .ty{color:var(--wb-muted);font-size:.7rem}.schema-empty{font-size:.75rem;color:var(--wb-muted);line-height:1.5}.ed-tools{display:flex;align-items:center;gap:8px;padding:6px 10px;border-bottom:1px solid var(--wb-border);flex:none}.run{background:var(--wb-accent);color:#fff;font-size:.8rem;font-weight:500;padding:5px 14px;border-radius:8px}.run:hover:not(:disabled){opacity:.9}.run:disabled{opacity:.6;cursor:default}.kbd-hint{font-size:.72rem;color:var(--wb-muted)}kbd{font-family:var(--wb-mono);font-size:.68rem;background:var(--wb-surface);border:1px solid var(--wb-border);border-radius:4px;padding:0 4px}.editor-wrap{position:relative;flex:none;height:26vh;min-height:110px;resize:vertical;overflow:hidden;border-bottom:1px solid var(--wb-border)}.highlight-layer,.editor{margin:0;padding:14px 16px;font-family:var(--wb-mono);font-size:.85rem;line-height:1.6;tab-size:4;white-space:pre-wrap;overflow-wrap:break-word;border:none}.highlight-layer{position:absolute;inset:0;overflow:hidden;pointer-events:none;color:var(--wb-strong)}.highlight-code{font:inherit;letter-spacing:inherit}.tok-keyword{color:var(--wb-kw);font-weight:600}.tok-string{color:var(--wb-str)}.tok-number{color:var(--wb-num)}.tok-comment{color:var(--wb-com);font-style:italic}.editor{position:absolute;inset:0;width:100%;height:100%;resize:none;outline:none;background:transparent;color:transparent;caret-color:var(--wb-accent)}.editor::selection{background:#5e81ac59}.bench[data-theme=dark] .editor::selection{background:#88c0d04d}.tabs{display:flex;gap:2px;border-bottom:1px solid var(--wb-border);padding:0 10px;flex:none;background:var(--wb-surface)}.tab{font-size:.8rem;padding:7px 12px;color:var(--wb-muted);border-bottom:2px solid transparent;margin-bottom:-1px}.tab.on{color:var(--wb-strong);border-bottom-color:var(--wb-accent);font-weight:500}.pane{flex:1;overflow:auto;min-height:0;display:none}.pane.on{display:block}.pane-results{flex:1}table.grid{border-collapse:collapse;width:100%;font-size:.82rem}.grid th{position:sticky;top:0;background:var(--wb-surface);color:var(--wb-strong);text-align:left;font-weight:600;padding:7px 14px;border-bottom:1px solid var(--wb-divider);white-space:nowrap}.grid td{padding:6px 14px;border-bottom:1px solid var(--wb-border);font-family:var(--wb-mono);font-size:.78rem;white-space:nowrap}.grid tr:hover td{background:var(--wb-surface)}.null{color:var(--wb-muted);font-style:italic}.error-panel{margin:10px 14px;padding:10px 12px;border:1px solid var(--wb-err);border-radius:8px;background:var(--wb-err-bg);color:var(--wb-heading);display:flex;gap:10px;align-items:baseline;font-size:.82rem}.error-label{flex:none;font-weight:600;color:var(--wb-err);font-size:.72rem;text-transform:uppercase;letter-spacing:.04em}.error-hint-title{font-weight:600;color:var(--wb-heading);margin-bottom:4px}.error-suggestion{color:var(--wb-text)}.error-panel .error-original code,.error-panel .error-toggle{color:var(--wb-strong)}.error-panel .error-label{color:#8f3541}.bench[data-theme=dark] .error-panel .error-original code,.bench[data-theme=dark] .error-panel .error-toggle,.bench[data-theme=dark] .error-panel .error-suggestion{color:var(--wb-heading)}.bench[data-theme=dark] .error-panel .error-label{color:#f2c1c7}.error-original code{font-size:.75rem;white-space:pre-wrap}.error-toggle{margin-top:8px;font-size:.72rem;text-decoration:underline;text-underline-offset:2px}.error-toggle:hover{text-decoration-thickness:2px}.error-toggle:focus-visible{outline:2px solid var(--wb-accent);outline-offset:2px}.bench[data-mode=card] .error-toggle{display:none}.error-panel code,.boot-error{font-family:var(--wb-mono);white-space:pre-wrap}.ghost{font-size:.78rem;color:var(--wb-muted);padding:5px 10px;border:1px solid var(--wb-border);border-radius:8px}.ghost:hover:not(:disabled){border-color:var(--wb-divider);color:var(--wb-text)}.ghost:disabled{opacity:.5;cursor:default}.statusbar{flex:none;padding:5px 14px;border-top:1px solid var(--wb-border);font-size:.72rem;color:var(--wb-muted)}.diagram{padding:16px;overflow:auto;background:radial-gradient(rgba(76,86,106,.14) 1px,transparent 1px);background-size:20px 20px}.diagram-svg{display:block}.diagram-box{fill:var(--wb-bg);stroke:var(--wb-strong);stroke-width:1}.diagram-box-header{fill:var(--wb-surface)}.diagram-hairline{stroke:var(--wb-divider);stroke-width:1}.diagram-title{font-family:Inter,system-ui,sans-serif;font-size:12px;font-weight:600;fill:var(--wb-heading)}.diagram-tag-text{font-family:var(--wb-mono);font-size:9px;letter-spacing:.06em;fill:var(--wb-muted)}.diagram-column{font-family:var(--wb-mono);font-size:11px;fill:var(--wb-text)}.diagram-column:hover{fill:var(--wb-accent)}.diagram-type{font-family:var(--wb-mono);font-size:9px;fill:var(--wb-muted)}.diagram-chip{fill:none;stroke:var(--wb-muted);stroke-width:.8}.diagram-chip-text{font-family:var(--wb-mono);font-size:8px;letter-spacing:.08em;fill:var(--wb-muted)}.diagram-row-zebra{fill:var(--wb-surface);opacity:.5}.diagram-more{font-family:var(--wb-mono);font-size:9px;fill:var(--wb-muted);font-style:italic}.diagram-edge{stroke:var(--wb-muted);stroke-width:1}.jr{padding:8px 14px;font-size:.78rem}.jr-tools{display:flex;justify-content:flex-end;padding-bottom:6px}.jr-row{display:flex;gap:10px;padding:6px 0;border-bottom:1px solid var(--wb-border);align-items:baseline}.dot{flex:none;width:8px;height:8px;border-radius:50%}.dot.ok{background:var(--wb-ok)}.dot.err{background:var(--wb-err)}.dot.reset{background:transparent;border:1.5px dashed var(--wb-muted)}.jr-sql{font-family:var(--wb-mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:55%}.jr-failed{color:var(--wb-err)}.jr-meta{color:var(--wb-muted);font-size:.72rem;margin-left:auto;white-space:nowrap}.jr-note{padding-top:8px;color:var(--wb-muted);font-size:.72rem;line-height:1.5}.badge-you{font-size:.62rem;color:var(--wb-accent);border:1px solid currentColor;border-radius:4px;padding:0 4px}.col-del{visibility:hidden;color:var(--wb-err);cursor:pointer;margin-left:6px;padding:0 2px}.tbl:hover .col-del,.tbl.open .col-del{visibility:visible}.overlay{position:absolute;inset:0;background:#0006;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:50}.overlay.on{display:flex}.modal{background:var(--wb-bg);border:1px solid var(--wb-border);border-radius:12px;box-shadow:0 8px 32px #0000002e;width:min(520px,92vw);max-height:86vh;display:flex;flex-direction:column;font-size:.85rem}.modal header{padding:12px 16px;border-bottom:1px solid var(--wb-border);font-weight:600;color:var(--wb-heading)}.modal .body{padding:14px 16px;overflow:auto}.modal footer{padding:12px 16px;border-top:1px solid var(--wb-border);display:flex;justify-content:flex-end;gap:8px}.filemeta{color:var(--wb-muted);font-size:.78rem;margin-bottom:10px}.preview-wrap{border:1px solid var(--wb-border);border-radius:8px;overflow:auto;margin-bottom:14px;max-height:200px}table.preview-table{border-collapse:collapse;width:100%;font-size:.76rem}.preview-table th{position:sticky;top:0;background:var(--wb-surface);color:var(--wb-strong);text-align:left;padding:5px 10px;border-bottom:1px solid var(--wb-divider);font-family:var(--wb-mono);white-space:nowrap}.preview-table td{padding:4px 10px;border-bottom:1px solid var(--wb-border);font-family:var(--wb-mono);white-space:nowrap}.frow{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}.frow label{font-size:.8rem;color:var(--wb-strong);min-width:88px}.frow input[type=text]{flex:1;background:var(--wb-surface);border:1px solid var(--wb-border);border-radius:6px;padding:6px 10px;color:var(--wb-heading);font-family:var(--wb-mono);font-size:.8rem}.frow select{background:var(--wb-surface);border:1px solid var(--wb-border);border-radius:6px;padding:5px 8px;color:var(--wb-text)}.frow .chk{display:flex;align-items:center;gap:6px;font-size:.8rem;color:var(--wb-text);min-width:0}.drop-hint{font-size:.72rem;color:var(--wb-muted);margin-top:10px;text-align:center}.bench.dragging:after{content:"Drop your CSV to import it";position:absolute;inset:10px;border:2px dashed var(--wb-accent);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1rem;color:var(--wb-accent);background:color-mix(in srgb,var(--wb-bg) 80%,transparent);z-index:60;pointer-events:none}.bench[data-mode=card]{font-size:14px}.bench[data-mode=card] .top,.bench[data-mode=card] .schema,.bench[data-mode=card] .seg,.bench[data-mode=card] .tabs,.bench[data-mode=card] .statusbar,.bench[data-mode=card] .kbd-hint{display:none!important}.bench[data-mode=card] .ed-tools{padding:5px 10px;border-bottom:1px solid var(--wb-border)}.bench[data-mode=card] #reset-btn{order:-1;font-size:.74rem;padding:3px 8px}.bench[data-mode=card] #run-btn{font-size:.78rem;padding:4px 13px}.bench[data-mode=card] .editor-wrap{height:auto;min-height:88px;max-height:40vh;resize:none}.bench[data-mode=card] .highlight-layer,.bench[data-mode=card] .editor{font-size:.83rem;line-height:1.6}.seg{display:none}@media(max-width:720px){.schema,.pane-results,.statusbar,.ed-tools,.editor-wrap{display:none}.seg{display:flex;gap:4px;padding:6px 10px;border-bottom:1px solid var(--wb-border);background:var(--wb-surface);flex:none}.seg button{flex:1;font-size:.8rem;padding:6px;border-radius:6px;color:var(--wb-muted)}.seg button.on{background:var(--wb-bg);color:var(--wb-strong);font-weight:500;border:1px solid var(--wb-border)}.bench[data-view=schema] .schema{display:block;width:100%;border-right:none}.bench[data-view=schema] .main{display:none}.bench[data-view=query] .editor{display:block}.bench[data-view=query] .ed-tools{display:flex}.bench[data-view=results] .pane-results,.bench[data-view=results] .statusbar,.bench[data-view=diagram] #diagram-pane{display:block}.tabs{display:none!important}.bench[data-view=history] #history-pane{display:block}}.boot-error{margin:10px 14px;padding:10px 12px;border:1px dashed var(--wb-err);border-radius:8px;font-size:.8rem;line-height:1.6}';
 class TA {
   constructor(A, I) {
     this.engine = A, this.ui = I;
@@ -195,13 +195,13 @@ function QI(g, A = Date.now()) {
 `);
   const Q = /* @__PURE__ */ new Map();
   for (const B of g) {
-    const C = JA(B.ts), E = Q.get(C);
+    const C = rA(B.ts), E = Q.get(C);
     E ? E.push(B) : Q.set(C, [B]);
   }
   for (const [B, C] of [...Q.entries()]) {
     I.push(`## ${B}`, "");
     for (const E of [...C].sort((o, t) => o.ts - t.ts))
-      E.type === "query" ? I.push(...CI(E), "") : E.type === "csv-import" ? I.push(`- imported CSV **${E.name}** (${rA(E.rows)} rows)`, "") : I.push(`- reset sample data **${E.fixture}**`, "");
+      E.type === "query" ? I.push(...CI(E), "") : E.type === "csv-import" ? I.push(`- imported CSV **${E.name}** (${JA(E.rows)} rows)`, "") : I.push(`- reset sample data **${E.fixture}**`, "");
   }
   return I.join(`
 `).replace(/\n{3,}/g, `
@@ -210,46 +210,46 @@ function QI(g, A = Date.now()) {
 `);
 }
 function CI(g) {
-  return g.ok ? [`✓ ${rA(g.rows)} row${g.rows === 1 ? "" : "s"} · ${g.ms} ms`, "", "```sql", g.sql, "```"] : [`✗ ${g.error}`, "", "```sql", g.sql, "```"];
+  return g.ok ? [`✓ ${JA(g.rows)} row${g.rows === 1 ? "" : "s"} · ${g.ms} ms`, "", "```sql", g.sql, "```"] : [`✗ ${g.error}`, "", "```sql", g.sql, "```"];
 }
-function JA(g) {
+function rA(g) {
   const A = new Date(g), I = String(A.getMonth() + 1).padStart(2, "0"), Q = String(A.getDate()).padStart(2, "0");
   return `${A.getFullYear()}-${I}-${Q}`;
 }
 function BI(g) {
-  return `${JA(g)} ${new Date(g).toLocaleTimeString([], {
+  return `${rA(g)} ${new Date(g).toLocaleTimeString([], {
     hour: "2-digit",
     minute: "2-digit"
   })}`;
 }
-function rA(g) {
+function JA(g) {
   return g.toLocaleString("en-US");
 }
 const EI = /^[a-z0-9]+(-[a-z0-9]+)*$/;
-class b extends Error {
+class f extends Error {
   constructor(A) {
     super(A), this.name = "FixtureError";
   }
 }
-function J(g) {
-  throw new b(g);
+function r(g) {
+  throw new f(g);
 }
 function iI(g, A) {
-  (typeof g != "object" || g === null || Array.isArray(g)) && J("The fixture file is not a JSON object — expected { … } at the top level.");
+  (typeof g != "object" || g === null || Array.isArray(g)) && r("The fixture file is not a JSON object — expected { … } at the top level.");
   const I = g, Q = I.id;
-  (typeof Q != "string" || !EI.test(Q)) && J(
+  (typeof Q != "string" || !EI.test(Q)) && r(
     `Fixture id ${JSON.stringify(Q ?? null)} is invalid — use lowercase letters, digits and hyphens (like "ecommerce").`
-  ), Q !== A && J(
+  ), Q !== A && r(
     `Asked for fixture "${A}" but this file is "${Q}" — the id must match the filename stem.`
-  ), I.kind !== "sqlite-dataset" && J(
+  ), I.kind !== "sqlite-dataset" && r(
     `Unknown fixture kind ${JSON.stringify(I.kind ?? null)} — this bench only loads sqlite-dataset (v1).`
-  ), I.version !== 1 && J(`Unsupported fixture version ${JSON.stringify(I.version ?? null)} — expected version 1.`), (typeof I.title != "string" || !I.title.trim()) && J('The fixture has no usable "title" — add a short human-readable name.'), "encoding" in I && J(
+  ), I.version !== 1 && r(`Unsupported fixture version ${JSON.stringify(I.version ?? null)} — expected version 1.`), (typeof I.title != "string" || !I.title.trim()) && r('The fixture has no usable "title" — add a short human-readable name.'), "encoding" in I && r(
     "This fixture declares an encoding (base64) — sqlite-dataset seeds must stay plain readable SQL so agents can author and diff them."
   );
   const B = I.reset;
-  (typeof B != "object" || B === null || Array.isArray(B)) && J('The fixture has no "reset" object — add {"reset": {"sql": "CREATE …"}}.');
+  (typeof B != "object" || B === null || Array.isArray(B)) && r('The fixture has no "reset" object — add {"reset": {"sql": "CREATE …"}}.');
   const C = B.sql;
-  (typeof C != "string" || !C.trim()) && J(`The fixture's "reset.sql" is missing or empty — put the seed SQL there.`);
+  (typeof C != "string" || !C.trim()) && r(`The fixture's "reset.sql" is missing or empty — put the seed SQL there.`);
   const E = typeof I.description == "string" && I.description.trim() ? I.description : void 0;
   return E === void 0 ? { id: Q, kind: "sqlite-dataset", title: I.title.trim(), sql: C } : { id: Q, kind: "sqlite-dataset", title: I.title.trim(), description: E, sql: C };
 }
@@ -258,19 +258,19 @@ async function oI(g) {
   try {
     A = await fetch(`fixtures/${encodeURIComponent(g)}.json`);
   } catch (Q) {
-    throw new b(
+    throw new f(
       `Could not fetch fixture "${g}": ${Q?.message ?? String(Q)}`
     );
   }
   if (A.status === 404)
-    throw new b(`No fixture named "${g}" was found (looked for fixtures/${g}.json).`);
+    throw new f(`No fixture named "${g}" was found (looked for fixtures/${g}.json).`);
   if (!A.ok)
-    throw new b(`Fetching fixture "${g}" failed: HTTP ${A.status}.`);
+    throw new f(`Fetching fixture "${g}" failed: HTTP ${A.status}.`);
   let I;
   try {
     I = await A.json();
   } catch (Q) {
-    throw new b(
+    throw new f(
       `Fixture "${g}" is not valid JSON: ${Q?.message ?? String(Q)}`
     );
   }
@@ -751,7 +751,7 @@ FROM orders o
 JOIN customers c ON c.id = o.customer_id
 GROUP BY c.region
 ORDER BY revenue DESC;`
-}, l = "http://www.w3.org/2000/svg", N = 240, r = 28, L = 24, S = 10, UA = 48, GA = 24, V = 20;
+}, l = "http://www.w3.org/2000/svg", N = 240, J = 28, L = 24, S = 10, UA = 48, GA = 24, V = 20;
 class nI {
   constructor(A, I) {
     this.container = A, this.onInsertColumn = I;
@@ -766,7 +766,7 @@ class nI {
     }
     this.fkColumns = kI(I);
     const Q = /* @__PURE__ */ new Map();
-    for (const F of [...A].sort(rI)) {
+    for (const F of [...A].sort(JI)) {
       const w = Q.get(F.layer);
       w ? w.push(F) : Q.set(F.layer, [F]);
     }
@@ -775,7 +775,7 @@ class nI {
     for (const [F, w] of Q) {
       let e = V;
       for (const c of w) {
-        const y = Math.min(c.table.columns.length, S), G = r + y * L + 8;
+        const y = Math.min(c.table.columns.length, S), G = J + y * L + 8;
         B.set(c.table.name, {
           x: V + F * (N + UA),
           y: e,
@@ -785,8 +785,8 @@ class nI {
       }
       C = Math.max(C, e - GA), E = Math.max(E, F);
     }
-    const o = V * 2 + (E + 1) * N + E * UA, t = Math.max(C, r * 2) + V, s = document.createElementNS(l, "svg");
-    s.setAttribute("viewBox", `0 0 ${o} ${t}`), s.setAttribute("width", String(o)), s.setAttribute("height", String(t)), s.classList.add("diagram-svg"), s.append(JI()), this.container.replaceChildren(s);
+    const o = V * 2 + (E + 1) * N + E * UA, t = Math.max(C, J * 2) + V, s = document.createElementNS(l, "svg");
+    s.setAttribute("viewBox", `0 0 ${o} ${t}`), s.setAttribute("width", String(o)), s.setAttribute("height", String(t)), s.classList.add("diagram-svg"), s.append(rI()), this.container.replaceChildren(s);
     for (const F of I) {
       const w = this.edgePath(F, B);
       w && s.append(w);
@@ -812,13 +812,13 @@ class nI {
     A.append(Q);
     const B = T(I.x, I.y, N, I.height);
     B.setAttribute("class", "diagram-box"), Q.append(B);
-    const C = T(I.x, I.y, N, r);
+    const C = T(I.x, I.y, N, J);
     C.setAttribute("class", "diagram-box-header"), Q.append(C);
     const E = SI(
       I.x,
-      I.y + r,
+      I.y + J,
       I.x + N,
-      I.y + r,
+      I.y + J,
       "diagram-hairline"
     );
     Q.append(E);
@@ -831,7 +831,7 @@ class nI {
       "diagram-tag-text"
     );
     t.setAttribute("text-anchor", "end"), Q.append(t), I.table.columns.slice(0, S).forEach((s, F) => {
-      const w = I.y + r + F * L;
+      const w = I.y + J + F * L;
       if (F % 2 === 1) {
         const G = T(I.x + 1, w, N - 2, L);
         G.setAttribute("class", "diagram-row-zebra"), G.setAttribute("rx", "0"), Q.append(G);
@@ -843,9 +843,9 @@ class nI {
         ...this.fkColumns.get(I.table.name)?.has(s.name) ? ["FK"] : []
       ];
       if (c.length > 0) {
-        const G = e.getComputedTextLength(), M = c.join(" "), x = M.length * 5 + 8, K = T(I.x + 12 + G + 8, w + 5, x, 12);
+        const G = e.getComputedTextLength(), M = c.join(" "), p = M.length * 5 + 8, K = T(I.x + 12 + G + 8, w + 5, p, 12);
         K.setAttribute("class", "diagram-chip"), K.setAttribute("rx", "2");
-        const k = Y(I.x + 12 + G + 8 + x / 2, w + 14, M, "diagram-chip-text");
+        const k = Y(I.x + 12 + G + 8 + p / 2, w + 14, M, "diagram-chip-text");
         k.setAttribute("text-anchor", "middle"), Q.append(K, k);
       }
       const y = Y(I.x + N - 12, w + 16, s.type.toLowerCase(), "diagram-type");
@@ -853,7 +853,7 @@ class nI {
     }), I.table.columns.length > S && Q.append(
       Y(
         I.x + 12,
-        I.y + r + S * L + 16,
+        I.y + J + S * L + 16,
         `+${I.table.columns.length - S} more columns`,
         "diagram-more"
       )
@@ -868,16 +868,16 @@ function kI(g) {
   }
   return A;
 }
-function JI() {
+function rI() {
   const g = document.createElementNS(l, "defs");
-  return g.innerHTML = '<marker id="fk-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="var(--muted)"/></marker>', g;
+  return g.innerHTML = '<marker id="fk-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="var(--wb-muted)"/></marker>', g;
 }
-function rI(g, A) {
+function JI(g, A) {
   return g.layer - A.layer || g.table.name.localeCompare(A.table.name);
 }
 function hA(g, A) {
   const I = g.table.columns.findIndex((Q) => Q.name === A);
-  return I === -1 || I >= S ? g.y + r + Math.min(g.table.columns.length, S) * L / 2 : g.y + r + I * L + L / 2;
+  return I === -1 || I >= S ? g.y + J + Math.min(g.table.columns.length, S) * L / 2 : g.y + J + I * L + L / 2;
 }
 function T(g, A, I, Q) {
   const B = document.createElementNS(l, "rect");
@@ -1010,9 +1010,9 @@ class dI {
   }
   showOutcome(A) {
     this.results.replaceChildren(
-      A.kind === "ok" ? bI(A) : this.renderError(A.message)
+      A.kind === "ok" ? fI(A) : this.renderError(A.message)
     ), this.setStatus(
-      A.kind === "ok" ? fI(A) : "Query failed — see the message above"
+      A.kind === "ok" ? bI(A) : "Query failed — see the message above"
     );
   }
   /** Infrastructural messages that aren't tied to a query run. */
@@ -1058,7 +1058,7 @@ class dI {
     }), I.append(C, o, t), I;
   }
 }
-function fI(g) {
+function bI(g) {
   const A = [
     `${yA(g.rowCount)} row${g.rowCount === 1 ? "" : "s"}`,
     `${g.ms} ms`
@@ -1067,7 +1067,7 @@ function fI(g) {
     g.truncated ? `showing first ${yA(g.rows.length)}` : "showing all"
   ), !g.truncated && g.rows.length === 0 && g.columns.length > 0 ? A.splice(2, 0, "no matching rows") : !g.truncated && g.rows.length === 0 && g.columns.length === 0 && A.push("statement executed"), A.join(" · ");
 }
-function bI(g) {
+function fI(g) {
   const A = document.createDocumentFragment();
   if (g.columns.length === 0) {
     const E = document.createElement("div");
@@ -1137,7 +1137,7 @@ function MA(g) {
     minute: "2-digit"
   });
 }
-class xI {
+class pI {
   overlay;
   fileMeta;
   preview;
@@ -1169,7 +1169,7 @@ class xI {
   async openFor(A, I) {
     this.csvText = I, this.filename = A;
     const Q = A.replace(/\.[^.]+$/, "");
-    this.nameInput.value = FA(Q), this.delimiterSelect.value = pI(I), this.headerCheckbox.checked = !0, this.errorBox.hidden = !0, this.refresh(), this.overlay.classList.add("on"), this.nameInput.focus();
+    this.nameInput.value = FA(Q), this.delimiterSelect.value = xI(I), this.headerCheckbox.checked = !0, this.errorBox.hidden = !0, this.refresh(), this.overlay.classList.add("on"), this.nameInput.focus();
   }
   close() {
     this.overlay.classList.remove("on"), this.onImport = void 0, this.csvText = "", this.filename = "";
@@ -1242,7 +1242,7 @@ class xI {
     this.preview.replaceChildren(I);
   }
 }
-function pI(g) {
+function xI(g) {
   const A = g.indexOf(`
 `), I = A === -1 ? g : g.slice(0, A);
   let Q = ",", B = -1;
@@ -1324,12 +1324,12 @@ const VI = `
 </nav>
 
 <div class="shell">
-  <aside class="schema" id="schema-panel" aria-label="Tables in this sample dataset"></aside>
+  <aside class="schema" part="schema" id="schema-panel" aria-label="Tables in this sample dataset"></aside>
 
   <section class="main">
     <div class="ed-tools">
-      <button class="run" id="run-btn">▸ Run query</button>
-      <button class="ghost" id="reset-btn" title="Restore the original sample data">Reset data</button>
+      <button class="run" part="run-button" id="run-btn">▸ Run query</button>
+      <button class="ghost" part="reset-button" id="reset-btn" title="Restore the original sample data">Reset data</button>
       <span class="spacer"></span>
       <span class="kbd-hint"><kbd id="modkey">Ctrl</kbd>+<kbd>Enter</kbd> to run</span>
     </div>
@@ -1337,7 +1337,7 @@ const VI = `
     <div class="editor-wrap" id="editor-wrap">
       <pre class="highlight-layer" id="highlight-layer" aria-hidden="true"><code class="highlight-code" id="highlight-code"></code></pre>
       <textarea
-        id="editor"
+        part="editor" id="editor"
         class="editor"
         spellcheck="false"
         aria-label="SQL query"
@@ -1351,11 +1351,11 @@ const VI = `
       <button class="tab" id="tab-history" role="tab" aria-selected="false">History <span id="history-count"></span></button>
     </div>
 
-    <section id="results" class="pane on pane-results" aria-live="polite" aria-label="Query results"></section>
+    <section part="results" id="results" class="pane on pane-results" aria-live="polite" aria-label="Query results"></section>
 
-    <section id="diagram-pane" class="pane diagram" aria-label="Database diagram"></section>
+    <section part="diagram" id="diagram-pane" class="pane diagram" aria-label="Database diagram"></section>
 
-    <section id="history-pane" class="pane jr" aria-label="Run history">
+    <section part="history" id="history-pane" class="pane jr" aria-label="Run history">
       <div class="jr-tools">
         <button class="ghost" id="export-btn" title="Download your runs as Markdown — paste it into any chat">↓ Export Markdown</button>
       </div>
@@ -1363,7 +1363,7 @@ const VI = `
       <div class="jr-note" id="history-empty">No runs yet — press Ctrl+Enter to run a query.</div>
     </section>
 
-    <footer class="statusbar" id="statusbar">Ready</footer>
+    <footer class="statusbar" part="statusbar" id="statusbar">Ready</footer>
   </section>
 </div>
 
@@ -1433,7 +1433,7 @@ function TI(g, A = {}) {
     c.scrollTop = w.scrollTop, c.scrollLeft = w.scrollLeft;
   });
   let M = null;
-  function x() {
+  function p() {
     C() === w && (M = {
       start: w.selectionStart ?? 0,
       end: w.selectionEnd ?? 0,
@@ -1441,7 +1441,7 @@ function TI(g, A = {}) {
     });
   }
   for (const i of ["keyup", "mouseup", "touchend", "input", "focus"])
-    w.addEventListener(i, x);
+    w.addEventListener(i, p);
   function K(i) {
     const D = w.value, R = M && M.len === D.length ? M : null, { start: U, end: a } = R ?? { start: D.length, end: D.length }, h = D[U - 1] ?? "", j = D[a] ?? "", uA = /[\w"'\]);]/.test(h) ? " " : "", mA = /[\w"']/.test(j) ? " " : "", tA = `${uA}${i}${mA}`;
     w.setRangeText(tA, U, a, "end");
@@ -1449,7 +1449,7 @@ function TI(g, A = {}) {
     M = { start: u, end: u, len: w.value.length }, w.focus(), w.setSelectionRange(u, u), G();
   }
   const k = A.db, KA = new mI(Q("schema-panel"), K, (i) => {
-    pA(i);
+    xA(i);
   }), YA = new nI(Q("diagram-pane"), K), W = aI(k), gA = new qI(Q("history-list"), Q("history-count"), Q("history-empty"));
   let n = {
     id: m.title,
@@ -1481,7 +1481,7 @@ function TI(g, A = {}) {
     Q("tab-results").classList.toggle("on", !R && !a), Q("tab-diagram").classList.toggle("on", a), Q("tab-history").classList.toggle("on", R);
     for (const h of ["tab-results", "tab-diagram", "tab-history"])
       Q(h).setAttribute("aria-selected", String(Q(h).classList.contains("on")));
-    Q("results").classList.toggle("on", U), Q("diagram-pane").classList.toggle("on", a), Q("history-pane").classList.toggle("on", R), a && f.dirty && iA();
+    Q("results").classList.toggle("on", U), Q("diagram-pane").classList.toggle("on", a), Q("history-pane").classList.toggle("on", R), a && b.dirty && iA();
     for (const h of g.querySelectorAll("[data-seg]"))
       h.classList.toggle("on", h === D);
   }
@@ -1523,14 +1523,14 @@ function TI(g, A = {}) {
   async function O(i) {
     oA(await _(o), i);
   }
-  const f = {
+  const b = {
     dirty: !0,
     tables: []
   };
   async function iA() {
     try {
       const i = await RI(o);
-      YA.render(cI(f.tables, i), i), f.dirty = !1;
+      YA.render(cI(b.tables, i), i), b.dirty = !1;
     } catch (i) {
       console.error("[sql-workbench] diagram failed", i);
     }
@@ -1540,10 +1540,10 @@ function TI(g, A = {}) {
       const h = R.get(a.name);
       return h ? { ...a, yours: !0, yoursTitle: `${h.filename} · saved in this browser` } : a;
     });
-    KA.render(U, D), f.tables = U, t = {
+    KA.render(U, D), b.tables = U, t = {
       tables: U.map((a) => a.name),
       columns: U.flatMap((a) => a.columns.map((h) => h.name))
-    }, f.dirty = !0, g.dataset.view === "diagram" && await iA();
+    }, b.dirty = !0, g.dataset.view === "diagram" && await iA();
   }
   (async () => {
     try {
@@ -1583,7 +1583,7 @@ LIMIT 10;`), w.value = i, G();
   e.addEventListener("click", () => {
     DA();
   });
-  const sA = 50 * 1024 * 1024, HA = sA / (1024 * 1024), P = new xI({
+  const sA = 50 * 1024 * 1024, HA = sA / (1024 * 1024), P = new pI({
     overlay: Q("import-overlay"),
     fileMeta: Q("import-filemeta"),
     preview: Q("import-preview"),
@@ -1640,23 +1640,23 @@ LIMIT 10;`, M = null, G(), s.setStatus(
       D && wA(D);
     }), i.click();
   });
-  let p = 0;
-  function fA(i) {
-    i.preventDefault(), p++, g.classList.add("dragging");
+  let x = 0;
+  function bA(i) {
+    i.preventDefault(), x++, g.classList.add("dragging");
   }
-  function bA() {
-    --p <= 0 && (p = 0, g.classList.remove("dragging"));
+  function fA() {
+    --x <= 0 && (x = 0, g.classList.remove("dragging"));
   }
   function qA(i) {
     i.preventDefault();
   }
-  function xA(i) {
-    i.preventDefault(), p = 0, g.classList.remove("dragging");
+  function pA(i) {
+    i.preventDefault(), x = 0, g.classList.remove("dragging");
     const D = i.dataTransfer?.files?.[0];
     D && wA(D);
   }
-  g.addEventListener("dragenter", fA), g.addEventListener("dragleave", bA), g.addEventListener("dragover", qA), g.addEventListener("drop", xA);
-  async function pA(i) {
+  g.addEventListener("dragenter", bA), g.addEventListener("dragleave", fA), g.addEventListener("dragover", qA), g.addEventListener("drop", pA);
+  async function xA(i) {
     if (!confirm(`Remove table "${i}"? Its saved CSV will be deleted too.`)) return;
     const D = await o.run(`DROP TABLE IF EXISTS "${i}";`);
     if (D.kind === "error") {
@@ -1690,7 +1690,10 @@ class ZI extends HTMLElement {
     const A = this.attachShadow({ mode: "open" }), I = document.createElement("style");
     I.textContent = VA, this.wrapper = document.createElement("div"), A.append(I, this.wrapper);
     const Q = this.getAttribute("mode"), B = this.getAttribute("theme"), C = this.getAttribute("db"), E = this.getAttribute("fixture");
-    this.handle = TI(this.wrapper, {
+    new MutationObserver(() => {
+      const o = this.wrapper?.dataset.theme;
+      o === "light" || o === "dark" ? this.setAttribute("data-theme", o) : this.removeAttribute("data-theme");
+    }).observe(this.wrapper, { attributes: !0, attributeFilter: ["data-theme"] }), this.handle = TI(this.wrapper, {
       ...Q ? { mode: Q } : {},
       ...B === "light" || B === "dark" ? { theme: B } : {},
       ...C ? { db: C } : {},

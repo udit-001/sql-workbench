@@ -34,6 +34,15 @@ export class SqlWorkbench extends HTMLElement {
     const theme = this.getAttribute("theme");
     const db = this.getAttribute("db");
     const fixture = this.getAttribute("fixture");
+    // Mirror the resolved theme onto the element: :host([data-theme]) is
+    // where the token blocks live, so integrators can out-vote any dark
+    // default from their own element styles.
+    new MutationObserver(() => {
+      const t = this.wrapper?.dataset.theme;
+      if (t === "light" || t === "dark") this.setAttribute("data-theme", t);
+      else this.removeAttribute("data-theme");
+    }).observe(this.wrapper!, { attributes: true, attributeFilter: ["data-theme"] });
+
     this.handle = mount(this.wrapper, {
       ...(mode ? { mode } : {}),
       ...(theme === "light" || theme === "dark" ? { theme: theme as Theme } : {}),
