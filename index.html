@@ -47,9 +47,7 @@
         padding: 14px 0; border-bottom: 1px solid var(--page-border);
         position: sticky; top: 0; background: var(--page-bg); z-index: 10;
       }
-      header.page .logo {
-        width: 22px; height: 22px; border-radius: 5px; background: #2e3440; flex: none;
-      }
+      header.page .logo { flex: none; display: block; }
       header.page .name { font-weight: 600; font-size: .95rem; }
       header.page .spacer { flex: 1; }
       header.page a.gh {
@@ -113,7 +111,10 @@
   <body>
     <div class="wrap">
       <header class="page">
-        <span class="logo"></span>
+        <svg class="logo" width="22" height="22" viewBox="0 0 16 16" aria-hidden="true">
+          <rect width="16" height="16" rx="3" fill="var(--page-accent)"/>
+          <path d="M3 5l3 3-3 3M7.5 11H13" stroke="var(--page-bg)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
         <span class="name">sql-workbench</span>
         <span class="spacer"></span>
         <a class="gh" href="https://github.com/udit-001/sql-workbench">GitHub</a>
