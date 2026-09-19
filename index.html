@@ -3,13 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>sql-workbench</title>
+    <title>sql-workbench — a SQL practice bench as a web component</title>
     <link
       rel="icon"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%232e3440'/%3E%3Cpath d='M3 5l3 3-3 3M7.5 11H13' stroke='%2381a1c1' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"
     />
-    <!-- Theme FOUC guard — shared pharos_theme key with Pharos; the bench
-         follows it (and the live relay) once mounted. -->
+    <!-- Theme FOUC guard — the page owns pharos_theme; embedded benches follow it. -->
     <script>
       ;(function () {
         var t = localStorage.getItem('pharos_theme')
@@ -20,20 +19,230 @@
       })()
     </script>
     <style>
-      /* Page chrome only — all bench styling lives in the shadow root. */
-      html,
+      :root {
+        --page-bg: #ffffff;
+        --page-surface: #f3f5f9;
+        --page-border: #e2e6ee;
+        --page-ink: #3b4252;
+        --page-muted: #767e8c;
+        --page-accent: #5e81ac;
+      }
+      [data-theme="dark"] {
+        --page-bg: #2e3440;
+        --page-surface: #3b4252;
+        --page-border: #434c5e;
+        --page-ink: #d8dee9;
+        --page-muted: #9aa5b5;
+        --page-accent: #81a1c1;
+      }
+      * { box-sizing: border-box; margin: 0; }
       body {
-        margin: 0;
-        height: 100%;
+        background: var(--page-bg);
+        color: var(--page-ink);
+        font: 16px/1.6 Inter, system-ui, sans-serif;
       }
-      sql-workbench {
-        display: block;
-        height: 100vh;
+      .wrap { max-width: 1020px; margin: 0 auto; padding: 0 20px 64px; }
+      header.page {
+        display: flex; align-items: center; gap: 12px;
+        padding: 14px 0; border-bottom: 1px solid var(--page-border);
+        position: sticky; top: 0; background: var(--page-bg); z-index: 10;
       }
+      header.page .logo {
+        width: 22px; height: 22px; border-radius: 5px; background: #2e3440; flex: none;
+      }
+      header.page .name { font-weight: 600; font-size: .95rem; }
+      header.page .spacer { flex: 1; }
+      header.page a.gh {
+        font-size: .85rem; color: var(--page-accent); text-decoration: none;
+      }
+      #theme-toggle {
+        font: inherit; background: none; border: 1px solid var(--page-border);
+        border-radius: 6px; padding: 3px 9px; cursor: pointer; color: var(--page-ink);
+      }
+      h1 { font-size: 1.7rem; line-height: 1.25; margin: 40px 0 10px; letter-spacing: -0.01em; }
+      .lede { font-size: 1.05rem; color: var(--page-muted); max-width: 46em; }
+      .lede strong { color: var(--page-ink); font-weight: 600; }
+      h2 {
+        font-size: 1.15rem; margin: 48px 0 6px; letter-spacing: -0.01em;
+        scroll-margin-top: 70px;
+      }
+      p.desc { color: var(--page-muted); max-width: 46em; margin-bottom: 14px; }
+      p.desc code, td code, li code {
+        background: var(--page-surface); border: 1px solid var(--page-border);
+        border-radius: 4px; padding: 0 4px; font-size: 0.85em;
+      }
+      pre {
+        background: var(--page-surface); border: 1px solid var(--page-border);
+        border-radius: 8px; padding: 12px 14px; overflow-x: auto;
+        font: 13px/1.55 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      }
+      pre code { color: var(--page-ink); }
+      table { border-collapse: collapse; font-size: .9rem; width: 100%; }
+      th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--page-border); vertical-align: top; }
+      th { color: var(--page-muted); font-weight: 600; }
+      .demo-frame {
+        border: 1px solid var(--page-border); border-radius: 10px;
+        overflow: hidden; margin: 14px 0;
+      }
+      sql-workbench { display: block; }
+      #hero { height: 620px; }
+      #card-demo { height: 420px; }
+      .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+      @media (max-width: 800px) { .cols { grid-template-columns: 1fr; } }
+      footer.page {
+        margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--page-border);
+        color: var(--page-muted); font-size: .85rem;
+      }
+      footer.page a { color: var(--page-accent); }
+      .toc { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 18px 0 0; padding: 0; list-style: none; font-size: .9rem; }
+      .toc a { color: var(--page-accent); text-decoration: none; }
     </style>
     <script type="module" src="/src/main.ts"></script>
   </head>
   <body>
-    <noscript>sql-workbench needs JavaScript.</noscript>
+    <div class="wrap">
+      <header class="page">
+        <span class="logo"></span>
+        <span class="name">sql-workbench</span>
+        <span class="spacer"></span>
+        <a class="gh" href="https://github.com/udit-001/sql-workbench">GitHub</a>
+        <button id="theme-toggle" title="Toggle page theme — the benches below follow">◐</button>
+      </header>
+
+      <h1>A SQL practice bench, in one script tag.</h1>
+      <p class="lede">
+        sql-workbench is a <strong>web component</strong>: a full SQLite engine, a query editor,
+        a schema browser, and a run journal compiled into a single JavaScript file. Drop it into
+        any page — a lesson, a docs site, a course — and your users can practice real SQL.
+        Nothing to install, nothing leaves the browser.
+      </p>
+      <ul class="toc">
+        <li><a href="#try">Live demo</a></li>
+        <li><a href="#quick-start">Quick start</a></li>
+        <li><a href="#card">Card mode</a></li>
+        <li><a href="#theme">Theming</a></li>
+        <li><a href="#data">Data isolation</a></li>
+        <li><a href="#starter">Starter query</a></li>
+        <li><a href="#journal">Journal</a></li>
+        <li><a href="#reference">Reference</a></li>
+      </ul>
+
+      <h2 id="try">Try it right here</h2>
+      <p class="desc">
+        This is the real component running on this page — not a screenshot. Run a query,
+        open the schema, check the diagram.
+      </p>
+      <div class="demo-frame"><sql-workbench id="hero" namespace="docs-demo"></sql-workbench></div>
+
+      <h2 id="quick-start">Add it to your page</h2>
+      <p class="desc">One script, one element. The file is ~1.5 MB (614 KB gzipped) and makes
+        zero side requests — the SQLite engine, worker and all, is inside it.</p>
+<pre><code>&lt;script type="module"
+        src="https://cdn.jsdelivr.net/gh/udit-001/sql-workbench@v0.2/dist/sql-workbench.js"&gt;&lt;/script&gt;
+
+&lt;sql-workbench namespace="my-app" style="display:block;height:560px"&gt;&lt;/sql-workbench&gt;</code></pre>
+      <p class="desc">
+        Prefer hosting it yourself? Download <code>sql-workbench.js</code> from the
+        <a href="https://github.com/udit-001/sql-workbench/releases">releases</a> and serve it
+        from your own origin.
+      </p>
+
+      <h2 id="card">Card mode: a drill, not a workbench</h2>
+      <p class="desc">
+        Add <code>mode="card"</code> and the bench collapses to just the editor and Run/Reset —
+        for embedding inside lesson content where the surrounding page provides the context.
+        This one below is the same component, same script:
+      </p>
+      <div class="demo-frame"><sql-workbench id="card-demo" namespace="docs-card" mode="card" sql="SELECT region, COUNT(*) AS orders&#10;FROM orders o JOIN customers c ON c.id = o.customer_id&#10;GROUP BY region;"></sql-workbench></div>
+
+      <h2 id="theme">It matches your app, not the other way round</h2>
+      <p class="desc">
+        The bench follows your page's <code>html[data-theme]</code> and the OS color scheme —
+        try the ◐ button in the header: both benches above and below flip with the page.
+        For a full rebrand, override design tokens on the element; they win even against dark mode:
+      </p>
+<pre><code>sql-workbench {
+  --wb-bg: #24283b; --wb-surface: #1f2335; --wb-accent: #bb9af7;
+  --wb-text: #c0caf5; --wb-heading: #7aa2f7; --wb-border: #414868;
+}
+sql-workbench::part(run-button) { border-radius: 999px; }</code></pre>
+      <p class="desc">
+        Tokens exist for every surface color, the SQL syntax palette, and fonts
+        (<code>--wb-bg</code>, <code>--wb-surface</code>, <code>--wb-accent</code>,
+        <code>--wb-kw</code>, <code>--wb-str</code>, <code>--wb-num</code>, <code>--wb-mono</code>, …).
+        Styleable parts: <code>editor</code>, <code>run-button</code>, <code>reset-button</code>,
+        <code>results</code>, <code>schema</code>, <code>diagram</code>, <code>history</code>,
+        <code>statusbar</code>.
+      </p>
+
+      <h2 id="data">Each instance keeps its own data</h2>
+      <p class="desc">
+        Two benches on one page don't share anything. The <code>namespace</code> attribute
+        gives each one a private journal and private imported tables — one per lesson, per user
+        task, or per tab:
+      </p>
+<pre><code>&lt;sql-workbench namespace="lesson-1"&gt;&lt;/sql-workbench&gt;
+&lt;sql-workbench namespace="lesson-2"&gt;&lt;/sql-workbench&gt;</code></pre>
+
+      <h2 id="starter">Start learners mid-thought</h2>
+      <p class="desc">
+        The <code>sql</code> attribute pre-fills the editor, so a lesson can pose a half-written
+        query and let the learner finish it. The card demo above uses it. You can also pass
+        <code>?sql=…</code> in the URL on a standalone page, and <code>dataset</code> loads a
+        named dataset instead of the built-in demo.
+      </p>
+
+      <h2 id="journal">Watch what learners run</h2>
+      <p class="desc">
+        Every query, import, and reset is journaled. Get them live as DOM events, read the
+        whole journal on demand, or export it as Markdown:
+      </p>
+<pre><code>bench.addEventListener("workbench-event", (e) =&gt; {
+  // e.detail: { type: "query" | "csv-import" | "dataset-reset", sql, ok, rows, ms, error … }
+});
+
+const events = await bench.events();      // newest first, same shapes
+const md = await bench.exportMarkdown();  // paste-ready practice log</code></pre>
+
+      <h2 id="reference">Reference</h2>
+      <div class="cols">
+        <div>
+          <p class="desc"><strong>Attributes</strong> — <code>mode</code> and <code>theme</code> react live;
+            <code>namespace</code>, <code>dataset</code>, <code>sql</code> are read at connect.</p>
+          <table>
+            <tr><th>Attribute</th><th>Effect</th></tr>
+            <tr><td><code>mode="card"</code></td><td>editor + Run/Reset only</td></tr>
+            <tr><td><code>theme</code></td><td><code>light</code> / <code>dark</code> override; else follows the page</td></tr>
+            <tr><td><code>namespace</code></td><td>private journal + imported tables</td></tr>
+            <tr><td><code>dataset</code></td><td>named dataset instead of the built-in demo</td></tr>
+            <tr><td><code>sql</code></td><td>boot-time editor prefill</td></tr>
+          </table>
+        </div>
+        <div>
+          <p class="desc"><strong>Methods &amp; events</strong></p>
+          <table>
+            <tr><th>Member</th><th>What it does</th></tr>
+            <tr><td><code>run(sql)</code></td><td>fills the editor, executes, journals</td></tr>
+            <tr><td><code>reset()</code></td><td>restores the dataset's seed data</td></tr>
+            <tr><td><code>events()</code></td><td>journal entries, newest first</td></tr>
+            <tr><td><code>exportMarkdown()</code></td><td>journal as a Markdown practice log</td></tr>
+            <tr><td><code>setTheme(t)</code></td><td><code>"light"</code> or <code>"dark"</code></td></tr>
+            <tr><td><code>workbench-event</code></td><td>fired for every journaled event</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <h2 id="privacy">Where the data lives</h2>
+      <p class="desc">
+        Everything runs in the learner's browser: SQLite in memory inside the tab, the journal
+        and imported CSVs in IndexedDB under your <code>namespace</code>. No server, no telemetry.
+      </p>
+
+      <footer class="page">
+        sql-workbench · <a href="https://github.com/udit-001/sql-workbench">source</a> ·
+        <a href="https://github.com/udit-001/sql-workbench/releases">releases</a> ·
+        this page embeds the component it documents
+      </footer>
+    </div>
   </body>
 </html>
