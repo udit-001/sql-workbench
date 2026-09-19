@@ -78,12 +78,21 @@ export class ImportModal {
     this.headerCheckbox.checked = true;
     this.errorBox.hidden = true;
     this.refresh();
+    this.overlay.classList.remove("closing"); // cancels a pending hide
     this.overlay.classList.add("on");
     this.nameInput.focus();
   }
 
   close(): void {
-    this.overlay.classList.remove("on");
+    if (!this.isOpen()) return;
+    // Bridge the exit with the same motion the entry used (200ms), then
+    // hide. The guard lets a fast reopen cancel the pending hide.
+    this.overlay.classList.add("closing");
+    window.setTimeout(() => {
+      if (this.overlay.classList.contains("closing")) {
+        this.overlay.classList.remove("on", "closing");
+      }
+    }, 200);
     this.onImport = undefined;
     this.csvText = "";
     this.filename = "";
