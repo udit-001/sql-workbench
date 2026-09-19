@@ -1,5 +1,6 @@
 node_modules/
-dist/
+dist/*
+!dist/sql-workbench.js
 *.local
 .playwright-mcp/
 .pi/
