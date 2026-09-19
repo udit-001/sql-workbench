@@ -3,16 +3,23 @@ import type { WorkbenchEvent } from "../bench-kit/journal";
 /**
  * History tab (LEARN-203): every recorded run with ✓/✗ styling, newest
  * first. Runs stay local — the note reminds learners their Pharos agent
- * reads this to shape the next lesson.
+ * reads this to shape the next lesson. Also owns the export button's
+ * availability: an empty journal has nothing to export, so the button
+ * disables instead of downloading a useless file.
  */
 export class HistoryTab {
   constructor(
     private readonly list: HTMLElement,
     private readonly count: HTMLElement,
     private readonly emptyNote: HTMLElement,
-  ) {}
+    private readonly exportButton: HTMLButtonElement,
+  ) {
+    // Boot fills this from the persisted journal; until then assume empty.
+    this.setExportAvailable(false);
+  }
 
   async refresh(events: WorkbenchEvent[]): Promise<void> {
+    this.setExportAvailable(events.length > 0);
     this.count.textContent = events.length > 0 ? `(${events.length})` : "";
     if (events.length === 0) {
       this.emptyNote.hidden = false;
@@ -26,6 +33,13 @@ export class HistoryTab {
       rows.append(this.row(event));
     }
     this.list.replaceChildren(rows);
+  }
+
+  private setExportAvailable(available: boolean): void {
+    this.exportButton.disabled = !available;
+    this.exportButton.title = available
+      ? "Download your runs as Markdown — paste it into any chat"
+      : "No runs to export yet";
   }
 
   private row(event: WorkbenchEvent): HTMLDivElement {

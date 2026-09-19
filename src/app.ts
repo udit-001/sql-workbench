@@ -92,7 +92,7 @@ export const BENCH_TEMPLATE = `
       <div class="jr-note" id="history-empty">No runs yet — press Ctrl+Enter to run a query.</div>
     </section>
 
-    <footer class="statusbar" part="statusbar" id="statusbar">Ready</footer>
+    <footer class="statusbar" part="statusbar" id="statusbar" aria-live="polite">Ready</footer>
   </section>
 </div>
 
@@ -209,6 +209,7 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
   const bench = new Bench(engine, ui);
   const editor = $<HTMLTextAreaElement>("editor");
   const resetButton = $<HTMLButtonElement>("reset-btn");
+  const runButton = $<HTMLButtonElement>("run-btn");
 
   /* --- Syntax highlighting (LEARN-210): transparent textarea over a
      colored twin. Programmatic .value swaps don't fire input, so every
@@ -292,7 +293,12 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
   /* --- Journal + History (LEARN-203) ---------------------------------- */
 
   const journalPromise = openJournal(namespace);
-  const history = new HistoryTab($("history-list"), $("history-count"), $("history-empty"));
+  const history = new HistoryTab(
+    $("history-list"),
+    $("history-count"),
+    $("history-empty"),
+    $("export-btn"),
+  );
 
   /* The one place "which dataset is loaded" lives: slug id for journal
      events, display title, and the statements Reset re-executes. */
@@ -333,6 +339,7 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
       return undefined;
     }
     // Blank queries are a no-op; real runs land in the journal immediately.
+    // Dirty tracking lives in Bench: submit() is its single writer.
     if (outcome) await recordQuery(sql.trim(), outcome);
     return outcome;
   }
@@ -343,6 +350,10 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
       // No hidden runs while the import modal blocks the view — the
       // learner's keystrokes belong to the modal until it closes.
       if (importModal.isOpen()) return;
+      // The click path is guarded by the disabled button; the keyboard
+      // path needs its own guard so spamming ⌘Enter can't stack
+      // concurrent submits that race the journal and the results pane.
+      if (runButton.disabled) return;
       event.preventDefault();
       void run(editor.value);
     }
@@ -384,7 +395,9 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
     selectView("history", seg ?? e.currentTarget as Element);
   });
 
-  /* Export Markdown — chat-paste-ready practice log. */
+  /* Export Markdown — chat-paste-ready practice log. Availability is
+     HistoryTab's concern (it owns the journal display); the click just
+     asks the journal for its events. */
   async function exportMarkdown(): Promise<string> {
     const journal = await journalPromise;
     return eventsToMarkdown(await journal.list());
@@ -515,11 +528,18 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
      The body lives in resetDataset (single reset path); the button is
      the UI adapter for it, the handle re-exports it. */
   const resetDataset = async (): Promise<void> => {
+    // Nothing has touched the data since the last seed — say so instead of
+    // re-executing the seeds and appending a meaningless history entry.
+    if (!bench.dirtySinceSeed) {
+      ui.setStatus("Data is already fresh — nothing to restore");
+      return;
+    }
     resetButton.disabled = true;
     try {
       await engine.load(currentDataset.seedStatements);
       await replayImports();
       await refreshSchema(currentDataset.title);
+      bench.markSeeded();
       await recordEvent({
         id: crypto.randomUUID(),
         type: "dataset-reset",
