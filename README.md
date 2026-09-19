@@ -78,10 +78,6 @@ Three layers, from zero-config to pixel-level:
 
 Everything runs client-side: SQLite lives in the tab (memory DB), the journal and imported CSVs live in IndexedDB under the `db` namespace. No server, no telemetry.
 
-### Legacy iframe path
-
-The standalone page and the release's `sql-workbench-asset.zip` (iframe embedding, `?mode=card` URL params) still work. The component is the better default for new integrations.
-
 ## Development
 
 ```sh
