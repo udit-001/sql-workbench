@@ -516,7 +516,11 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
     chip.hidden = false;
     const journal = await journalPromise;
     await history.refresh(await journal.list());
-    editor.focus();
+    // Caret lands in the editor so typing starts immediately — but an
+    // embedded bench sits below the fold, and a bare focus() would yank
+    // the host page down to it on load. preventScroll keeps the caret
+    // without the jump; the first keypress scrolls naturally.
+    editor.focus({ preventScroll: true });
   } catch (err) {
     // Malformed/missing fixtures fail loud: console + visible panel.
     console.error("[sql-workbench]", err);
