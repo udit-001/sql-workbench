@@ -17,9 +17,11 @@
 
 Everything runs client-side: the database lives in memory in your tab and the journal lives in IndexedDB. No server, no telemetry.
 
-## Running it
+## Try it
 
-There's no hosted deployment yet, so it runs from source:
+Live at **https://udit-001.github.io/sql-workbench/** — no install, no account.
+
+Or run it from source:
 
 ```sh
 npm install
