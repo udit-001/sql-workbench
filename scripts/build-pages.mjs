@@ -16,4 +16,5 @@ html = html.replace(devEntries, prodEntries);
 writeFileSync("dist/index.html", html);
 
 cpSync("public/fixtures", "dist/fixtures", { recursive: true });
+cpSync("public/og-image.png", "dist/og-image.png");
 console.log("pages assembled in dist/");
