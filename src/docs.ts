@@ -18,6 +18,20 @@ if (sqlParam && hero) hero.setAttribute("sql", sqlParam);
 const fixtureParam = params.get("dataset") ?? params.get("fixture");
 if (fixtureParam && hero) hero.setAttribute("dataset", fixtureParam);
 
+/* Header ◐ button — the page owns pharos_theme (LEARN-224): write the key
+   and the resolved html[data-theme]; embedded benches follow the document
+   through the controller's MutationObserver. This button is page chrome
+   left over from the pre-component standalone app (where app.ts wired it
+   inside the bench) — re-wired here when the docs page carved it out. */
+const themeToggle = document.getElementById("theme-toggle");
+if (themeToggle) {
+  themeToggle.addEventListener("click", () => {
+    const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+    document.documentElement.dataset.theme = next;
+    localStorage.setItem("pharos_theme", next);
+  });
+}
+
 /* Copy buttons on code blocks marked data-copy. */
 for (const pre of document.querySelectorAll<HTMLElement>("pre[data-copy]")) {
   if (pre.querySelector(".copy-btn")) continue;
