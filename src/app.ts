@@ -150,6 +150,9 @@ export interface WorkbenchHandle {
   reset(): Promise<void>;
   /** The whole session journal as Markdown. */
   exportMarkdown(): Promise<string>;
+  /** All journaled events, newest first — same shapes the
+      `workbench-event` CustomEvent carries as `detail`. */
+  events(): Promise<WorkbenchEvent[]>;
   /** Apply a theme now ('light' | 'dark'); overrides host-following. */
   setTheme(theme: Theme): void;
   /** Tear down listeners and the engine worker. */
@@ -662,6 +665,10 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
     },
     reset: () => resetDataset(),
     exportMarkdown,
+    async events() {
+      const journal = await journalPromise;
+      return journal.list();
+    },
     setTheme(t: Theme) {
       theme.set(t);
     },

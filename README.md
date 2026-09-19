@@ -47,6 +47,7 @@ const bench = document.querySelector("sql-workbench");
 await bench.run("SELECT * FROM orders LIMIT 5");  // → Outcome, journaled
 await bench.reset();                               // re-seed the dataset
 const md = await bench.exportMarkdown();           // session journal as Markdown
+const events = await bench.events();               // journaled events, newest first
 bench.setTheme("dark");
 bench.addEventListener("workbench-event", (e) => {
   // e.detail: { type: "query" | "dataset-reset" | "csv-import", ... }

@@ -15,6 +15,7 @@
 import { mount, type WorkbenchHandle } from "./app";
 import styles from "./styles.css?inline";
 import type { Theme } from "./bench-kit/theme";
+import type { WorkbenchEvent } from "./bench-kit/journal";
 
 export class SqlWorkbench extends HTMLElement {
   static observedAttributes = ["mode", "theme"];
@@ -87,6 +88,12 @@ export class SqlWorkbench extends HTMLElement {
   /** The whole session journal as Markdown. */
   exportMarkdown(): Promise<string> {
     return this.require().exportMarkdown();
+  }
+
+  /** All journaled events, newest first — same shapes the
+      `workbench-event` CustomEvent carries as `detail`. */
+  events(): Promise<WorkbenchEvent[]> {
+    return this.require().events();
   }
 
   private require(): WorkbenchHandle {
