@@ -9,8 +9,11 @@ export default defineConfig({
   build: {
     // Single-file contract: the sqlite worker ships as a blob and the wasm
     // rides along as base64 inside sql-workbench.js — zero side requests.
+    // JS-only entry (src/main.ts): the component artifact must not include
+    // the docs-page logic (src/docs.ts), which index.html loads separately.
     assetsInlineLimit: 100_000_000,
     rollupOptions: {
+      input: "src/sql-workbench.ts",
       output: {
         entryFileNames: "sql-workbench.js",
         chunkFileNames: "sql-workbench.js",

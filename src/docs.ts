@@ -1,7 +1,12 @@
 /**
  * Docs-page logic (copy buttons, URL-param wiring) — loaded only by the
- * Pages site, never by the component bundle. Scope guards keep it inert
- * if a marker element is missing.
+ * Pages site, never by the component bundle.
+ *
+ * DOM contract (index.html must provide):
+ *   - #hero            the demo bench; ?mode/?sql/?dataset params target it
+ *   - pre[data-copy]   code blocks that get a copy button
+ * Loaded via docs.js (see scripts/build-pages.mjs); the component artifact
+ * (npm run build) excludes this module entirely — check-artifact enforces it.
  */
 if ((window as unknown as { __docsWired?: boolean }).__docsWired) {
   throw undefined; // already wired (dev bundles us; Pages loads us standalone)
