@@ -32,7 +32,7 @@ jobs:
       - name: Download latest released component
         run: |
           mkdir -p dist
-          gh release download --repo "$GITHUB_REPOSITORY" --pattern "sql-workbench.js" --output dist/sql-workbench.js
+          gh release download --repo "$GITHUB_REPOSITORY" --pattern "sql-workbench.js" --clobber --output dist/sql-workbench.js
         env:
           GH_TOKEN: ${{ github.token }}
       - name: Assemble docs site
