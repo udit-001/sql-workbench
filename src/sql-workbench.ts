@@ -3,10 +3,10 @@
  *
  * One script tag + one element (single-file build, LEARN-194):
  *   <script type="module" src=".../sql-workbench.js"></script>
- *   <sql-workbench mode="card" theme="dark" db="lesson-3"></sql-workbench>
+ *   <sql-workbench mode="card" theme="dark" namespace="lesson-3"></sql-workbench>
  *
- * Attributes (mode, theme, db, fixture) mirror MountOptions; theme and
- * mode react live, db and fixture are read at connect (changing them
+ * Attributes (mode, theme, namespace, dataset) mirror MountOptions; theme and
+ * mode react live, namespace and dataset are read at connect (changing them
  * remounts only via element replacement). The bench renders in a shadow
  * root — its styles cannot leak out and host styles cannot leak in.
  * Every journaled event re-dispatches as a `workbench-event` CustomEvent
@@ -32,8 +32,9 @@ export class SqlWorkbench extends HTMLElement {
 
     const mode = this.getAttribute("mode");
     const theme = this.getAttribute("theme");
-    const db = this.getAttribute("db");
-    const fixture = this.getAttribute("fixture");
+    // `db`/`fixture` are deprecated aliases from the v0.2 API.
+    const ns = this.getAttribute("namespace") ?? this.getAttribute("db");
+    const dataset = this.getAttribute("dataset") ?? this.getAttribute("fixture");
     // Mirror the resolved theme onto the element: :host([data-theme]) is
     // where the token blocks live, so integrators can out-vote any dark
     // default from their own element styles.
@@ -46,8 +47,8 @@ export class SqlWorkbench extends HTMLElement {
     this.handle = mount(this.wrapper, {
       ...(mode ? { mode } : {}),
       ...(theme === "light" || theme === "dark" ? { theme: theme as Theme } : {}),
-      ...(db ? { db } : {}),
-      ...(fixture ? { fixture } : {}),
+      ...(ns ? { namespace: ns } : {}),
+      ...(dataset ? { dataset } : {}),
       onEvent: (event) => {
         this.dispatchEvent(new CustomEvent("workbench-event", { detail: event }));
       },

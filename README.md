@@ -25,7 +25,7 @@ The bench compiles to one JavaScript file with no side requests: editor, SQLite 
 <script type="module"
         src="https://cdn.jsdelivr.net/gh/udit-001/sql-workbench@v0.2.1/dist/sql-workbench.js"></script>
 
-<sql-workbench db="my-app" style="display:block;height:560px"></sql-workbench>
+<sql-workbench namespace="my-app" style="display:block;height:560px"></sql-workbench>
 ```
 
 Prefer vendoring? Download `sql-workbench.js` from the [releases](https://github.com/udit-001/sql-workbench/releases) and serve it yourself.
@@ -36,8 +36,8 @@ Prefer vendoring? Download `sql-workbench.js` from the [releases](https://github
 | --- | --- | --- |
 | `mode` | `card` | drill variant: editor + Run/Reset only (live-reactive) |
 | `theme` | `light` \| `dark` | explicit override; omit to follow the host page (live-reactive) |
-| `db` | any name | storage namespace: separate journal + imported tables per value (read at connect) |
-| `fixture` | dataset id | load a fixture instead of the built-in demo (read at connect) |
+| `namespace` | any name | private data space for this bench: its own journal and imported tables (read at connect) |
+| `dataset` | dataset id | load a named dataset instead of the built-in demo (read at connect) |
 
 ### API
 

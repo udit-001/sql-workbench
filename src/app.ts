@@ -131,9 +131,9 @@ export interface MountOptions {
   theme?: Theme;
   /** Storage namespace: two benches on one page get separate journals
       and imported tables. Defaults to the standalone namespace. */
-  db?: string;
-  /** Fixture id to load instead of the built-in demo dataset. */
-  fixture?: string;
+  namespace?: string;
+  /** Dataset id to load instead of the built-in demo dataset. */
+  dataset?: string;
   /** Called for every journaled event (query runs, resets, imports). */
   onEvent?: (event: WorkbenchEvent) => void;
 }
@@ -272,7 +272,7 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
     refreshHighlight(); // setRangeText doesn't fire input
   }
 
-  const namespace = opts.db;
+  const namespace = opts.namespace;
   const schemaPanel = new SchemaPanel($("schema-panel"), insertIdentifier, (name) => {
     void removeImportedTable(name);
   });
@@ -379,7 +379,7 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
     })();
   });
 
-  /* --- Boot: decide the dataset (opts.fixture or built-in demo), seed, introspect */
+  /* --- Boot: decide the dataset (opts.dataset or built-in demo), seed, introspect */
 
   /**
    * Re-run every persisted CSV import against the current database. Called
@@ -455,9 +455,9 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
   try {
     let starterQuery = DEMO_DATASET.sampleQuery;
 
-    if (opts.fixture) {
-      const fixture = await fetchFixture(opts.fixture); // throws plain-language FixtureError
-      currentDataset = { id: opts.fixture, title: fixture.title, seedStatements: [fixture.sql] };
+    if (opts.dataset) {
+      const fixture = await fetchFixture(opts.dataset); // throws plain-language FixtureError
+      currentDataset = { id: opts.dataset, title: fixture.title, seedStatements: [fixture.sql] };
       starterQuery = ""; // filled from the loaded schema below
     }
 
