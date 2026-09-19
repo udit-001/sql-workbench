@@ -6,9 +6,20 @@
 | --- | --- |
 | ![SQL Workbench, light theme](docs/screenshots/bench-light.png) | ![SQL Workbench, dark theme](docs/screenshots/bench-dark.png) |
 
+**Try it:** https://udit-001.github.io/sql-workbench/ · or `npm install && npm run dev`
+
+## What you get
+
+- **Write and run real SQL** — a full SQLite engine compiled to WebAssembly runs in the page. Window functions, CTEs, joins: it's SQLite, not a toy parser.
+- **Learn from your mistakes** — errors are explained in plain language; mistype a column (`c.regio`) and it asks if you meant `region`.
+- **See the schema before you guess** — a sidebar lists every table and column (click to insert at the caret), and a diagram draws the tables with their foreign-key graph.
+- **Bring your own data** — import a CSV and query it like any other table. A sample e-commerce dataset (customers → orders → products) is built in.
+- **Keep a query journal** — every run is saved to history in your browser; export the whole session as Markdown when you're done.
+- **Drop it into any page** — the whole bench is a single-file web component that picks up the host page's theme. Details below.
+
 ## Use it in your app
 
-The whole bench — editor, SQLite engine (wasm), schema tools, journal — compiles to **one JavaScript file** with no side requests. Load it and drop in the element:
+The bench compiles to one JavaScript file with no side requests: editor, SQLite engine (wasm), schema tools, and journal all inline. Load it and drop in the element:
 
 ```html
 <script type="module"
@@ -17,7 +28,7 @@ The whole bench — editor, SQLite engine (wasm), schema tools, journal — comp
 <sql-workbench db="my-app" style="display:block;height:560px"></sql-workbench>
 ```
 
-Prefer vendoring? Download `sql-workbench.js` from the [releases](https://github.com/udit-001/sql-workbench/releases) and serve it yourself — same story, any origin.
+Prefer vendoring? Download `sql-workbench.js` from the [releases](https://github.com/udit-001/sql-workbench/releases) and serve it yourself.
 
 ### Attributes
 
@@ -25,7 +36,7 @@ Prefer vendoring? Download `sql-workbench.js` from the [releases](https://github
 | --- | --- | --- |
 | `mode` | `card` | drill variant: editor + Run/Reset only (live-reactive) |
 | `theme` | `light` \| `dark` | explicit override; omit to follow the host page (live-reactive) |
-| `db` | any name | storage namespace — separate journal + imported tables per value (read at connect) |
+| `db` | any name | storage namespace: separate journal + imported tables per value (read at connect) |
 | `fixture` | dataset id | load a fixture instead of the built-in demo (read at connect) |
 
 ### API
@@ -45,7 +56,7 @@ bench.addEventListener("workbench-event", (e) => {
 
 Three layers, from zero-config to pixel-level:
 
-1. **Auto-adapt** — the bench follows the host page's `html[data-theme]`, OS `prefers-color-scheme`, and (if a parent frame sends one) a `{ type: "theme", theme: "light" | "dark" }` postMessage. Embedded benches never write your theme keys.
+1. **Auto-adapt** — the bench follows the host page's `html[data-theme]`, the OS `prefers-color-scheme`, and (if a parent frame sends one) a `{ type: "theme", theme: "light" | "dark" }` postMessage. Embedded benches never write your theme keys.
 2. **Token overrides** — every design token is a `--wb-*` custom property; set them on the element and they win the cascade, even against dark mode:
 
    ```css
@@ -65,36 +76,21 @@ Three layers, from zero-config to pixel-level:
 
 ### Data & privacy
 
-Everything runs client-side: SQLite lives in the tab (memory DB), the journal and imported CSVs live in IndexedDB under the `db` namespace. No server, no telemetry, no cookies.
+Everything runs client-side: SQLite lives in the tab (memory DB), the journal and imported CSVs live in IndexedDB under the `db` namespace. No server, no telemetry.
 
 ### Legacy iframe path
 
-The standalone page and the release's `sql-workbench-asset.zip` (iframe embedding, `?mode=card` URL params) still work and are still supported — the component is the better default for new integrations.
+The standalone page and the release's `sql-workbench-asset.zip` (iframe embedding, `?mode=card` URL params) still work. The component is the better default for new integrations.
 
-## What you get
-
-- **Write and run real SQL** — a full SQLite engine compiled to WebAssembly runs in the page. Window functions, CTEs, joins: it's SQLite, not a toy parser.
-- **Learn from your mistakes** — errors are explained in plain language, and mistype a column (`c.regio`) and it asks if you meant `region`.
-- **See the schema before you guess** — a sidebar lists every table and column (click to insert at the caret), and a diagram draws the tables with their foreign-key graph.
-- **Bring your own data** — import a CSV and query it like any other table. A sample e-commerce dataset (customers → orders → products) is built in.
-- **Keep a query journal** — every run is saved to history in your browser. Export the whole session as Markdown when you're done.
-- **Embed it anywhere** — `?mode=card` collapses the workbench into an embeddable card that picks up the host page's theme.
-
-Everything runs client-side: the database lives in memory in your tab and the journal lives in IndexedDB. No server, no telemetry.
-
-## Try it
-
-Live at **https://udit-001.github.io/sql-workbench/** — no install, no account.
-
-Or run it from source:
+## Development
 
 ```sh
 npm install
-npm run dev
+npm run dev             # standalone app at localhost:5173
+npm test                # vitest, 88 tests
+npm run typecheck       # tsc --noEmit
+npm run build           # standalone dist/
+npm run build:component # single-file dist-component/sql-workbench.js
 ```
-
-Other scripts: `npm test` (vitest), `npm run typecheck`, `npm run build`.
-
-## How it's built
 
 Vite + TypeScript, with `@sqlite.org/sqlite-wasm` as the only runtime dependency. The engine, journal, CSV parser, and error explainer live in `src/bench-kit/` as small, independently tested modules.
