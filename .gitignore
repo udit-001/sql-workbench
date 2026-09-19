@@ -7,3 +7,4 @@ dist/*
 *.png
 !docs/screenshots/*.png
 !public/og-image.png
+.scripts/
