@@ -33,23 +33,29 @@ if (themeToggle) {
 
 /* Mobile sections menu (≤640px): the toc row hides and the header
    disclosure takes clones of the same links — one source of truth for
-   section navigation. Close on selection, outside tap, or Escape. */
+   section navigation. Contract: #nav-menu > .nav-list receives .toc a.
+   Close on selection, outside tap, or Escape. */
 const navMenu = document.getElementById("nav-menu") as HTMLDetailsElement | null;
 const tocList = document.querySelector(".toc");
 if (navMenu && tocList) {
-  navMenu.querySelector(".nav-list")?.append(
-    ...[...tocList.querySelectorAll("a")].map((a) => a.cloneNode(true)),
-  );
-  const closeMenu = () => navMenu.removeAttribute("open");
-  navMenu.addEventListener("click", (e) => {
-    if ((e.target as Element).closest("a")) closeMenu();
-  });
-  document.addEventListener("click", (e) => {
-    if (navMenu.open && !navMenu.contains(e.target as Node)) closeMenu();
-  });
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") closeMenu();
-  });
+  const navList = navMenu.querySelector(".nav-list");
+  const links = [...tocList.querySelectorAll("a")].map((a) => a.cloneNode(true));
+  if (!navList || links.length === 0) {
+    // An empty mobile menu ships invisibly broken — fail loud instead.
+    console.warn("[docs] #nav-menu out of sync with .toc — mobile section menu will be empty");
+  } else {
+    navList.append(...links);
+    const closeMenu = () => navMenu.removeAttribute("open");
+    navMenu.addEventListener("click", (e) => {
+      if ((e.target as Element).closest("a")) closeMenu();
+    });
+    document.addEventListener("click", (e) => {
+      if (navMenu.open && !navMenu.contains(e.target as Node)) closeMenu();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeMenu();
+    });
+  }
 }
 
 /* Copy buttons on code blocks marked data-copy. */
