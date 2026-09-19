@@ -7,21 +7,15 @@ import { WorkerRpc, type WorkerEndpoint } from "./worker-rpc";
  *   main   → { id, op: "run" | "load", ... }
  *   worker → { id, ok, result | error }
  *
- * Two adapters at the distribution seam (LEARN-194): the standalone build
- * spawns a URL worker (cacheable separate chunk); the single-file component
- * build needs the worker inlined as a blob (`?worker&inline`, spike-proven).
+ * The worker ships INLINE (blob) in every build: the single-file contract
+ * (LEARN-194) means zero side requests — the wasm rides along as base64.
  */
 import InlineWorker from "./sqlite.worker.ts?worker&inline";
 
 export class WasmEngine implements Engine {
   /** Spawns the bundled sqlite worker. */
-  static spawn(opts: { inline?: boolean } = {}): WasmEngine {
-    const worker = opts.inline
-      ? new InlineWorker()
-      : new Worker(new URL("./sqlite.worker.ts", import.meta.url), {
-          type: "module",
-        });
-    return new WasmEngine(worker);
+  static spawn(): WasmEngine {
+    return new WasmEngine(new InlineWorker());
   }
 
   constructor(workerEndpoint: WorkerEndpoint) {

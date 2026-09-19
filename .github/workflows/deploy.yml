@@ -28,7 +28,6 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
-      - run: npm run build:component
       - name: Package asset zip
         run: (cd dist && zip -r ../sql-workbench-asset.zip .)
       - uses: actions/upload-pages-artifact@v3
@@ -41,7 +40,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: component-js
-          path: dist-component/sql-workbench.js
+          path: dist/sql-workbench.js
 
   deploy-pages:
     needs: build

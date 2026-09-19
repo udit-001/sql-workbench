@@ -23,7 +23,7 @@ The bench compiles to one JavaScript file with no side requests: editor, SQLite 
 
 ```html
 <script type="module"
-        src="https://cdn.jsdelivr.net/gh/udit-001/sql-workbench@v0.2.0/dist-component/sql-workbench.js"></script>
+        src="https://cdn.jsdelivr.net/gh/udit-001/sql-workbench@v0.2.0/dist/sql-workbench.js"></script>
 
 <sql-workbench db="my-app" style="display:block;height:560px"></sql-workbench>
 ```
@@ -85,8 +85,7 @@ npm install
 npm run dev             # standalone app at localhost:5173
 npm test                # vitest, 88 tests
 npm run typecheck       # tsc --noEmit
-npm run build           # standalone dist/
-npm run build:component # single-file dist-component/sql-workbench.js
+npm run build           # dist/ = demo page + single-file sql-workbench.js + fixtures
 ```
 
 Vite + TypeScript, with `@sqlite.org/sqlite-wasm` as the only runtime dependency. The engine, journal, CSV parser, and error explainer live in `src/bench-kit/` as small, independently tested modules.

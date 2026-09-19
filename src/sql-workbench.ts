@@ -48,7 +48,6 @@ export class SqlWorkbench extends HTMLElement {
       ...(theme === "light" || theme === "dark" ? { theme: theme as Theme } : {}),
       ...(db ? { db } : {}),
       ...(fixture ? { fixture } : {}),
-      inlineWorker: true, // single-file contract: no side requests (LEARN-194)
       onEvent: (event) => {
         this.dispatchEvent(new CustomEvent("workbench-event", { detail: event }));
       },

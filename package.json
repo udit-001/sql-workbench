@@ -6,11 +6,10 @@
   "description": "Zero-install browser SQL practice bench (LEARN-200)",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "tsc --noEmit && vite build && node -e \"const fs=require('fs');for(const f of fs.readdirSync('dist/assets')) if(f.startsWith('sqlite3-worker1')||f.startsWith('sqlite.worker')) fs.unlinkSync('dist/assets/'+f)\"",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "build:component": "vite build --config vite.component.config.ts"
+    "test": "vitest run"
   },
   "dependencies": {
     "@sqlite.org/sqlite-wasm": "^3.53.4-build1"

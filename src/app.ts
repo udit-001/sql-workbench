@@ -134,9 +134,6 @@ export interface MountOptions {
   db?: string;
   /** Fixture id to load instead of the built-in demo dataset. */
   fixture?: string;
-  /** Inline the sqlite worker as a blob -- required for the single-file
-      component build (LEARN-194 distribution seam, spike-proven). */
-  inlineWorker?: boolean;
   /** Called for every journaled event (query runs, resets, imports). */
   onEvent?: (event: WorkbenchEvent) => void;
 }
@@ -192,7 +189,7 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
   /* Card mode (LEARN-205): embedded drill variant — chrome hides via CSS. */
   if (opts.mode === "card") host.dataset.mode = "card";
 
-  const engine = WasmEngine.spawn({ inline: opts.inlineWorker ?? false });
+  const engine = WasmEngine.spawn();
 
   /* Live schema names for did-you-mean suggestions on SQL errors. */
   let schemaContext: { tables: string[]; columns: string[] } = { tables: [], columns: [] };
