@@ -16,10 +16,35 @@ export interface ParsedCsv {
   rows: string[][];
 }
 
+/** How much leading text the binary sniff inspects. */
+const BINARY_SNIFF_BYTES = 8192;
+
+/**
+ * Binary sniff over a leading sample: NUL bytes or a meaningful share of
+ * C0 control characters (anything but tab/newline) or U+FFFD replacement
+ * markers mean this decoded as a binary file, not text. Catches images,
+ * PDFs and zips dropped onto the bench — including ones renamed to .csv.
+ * Text files, even odd ones, never come close to the threshold.
+ */
+function isProbablyBinary(sample: string): boolean {
+  if (sample.includes("\0")) return true; // includes UTF-16 exports — re-save as UTF-8
+  let suspicious = 0;
+  for (let i = 0; i < sample.length; i++) {
+    const code = sample.charCodeAt(i);
+    if (code === 0xfffd || (code < 32 && code !== 9 && code !== 10 && code !== 13)) suspicious++;
+  }
+  return suspicious / sample.length > 0.05;
+}
+
 /** Parse CSV text with RFC4180 quoting: "…" may span lines; "" escapes '"'. */
 export function parseCsv(text: string, options: CsvParseOptions): ParsedCsv {
   const { delimiter, hasHeader } = options;
   if (!text.trim()) throw new Error("The file looks empty — nothing to import.");
+  if (isProbablyBinary(text.slice(0, BINARY_SNIFF_BYTES))) {
+    throw new Error(
+      "This file looks binary (an image, PDF, or zip?) rather than plain-text CSV — export it as UTF-8 CSV and try again.",
+    );
+  }
 
   const records = splitRecords(text, delimiter);
   const first = records[0];

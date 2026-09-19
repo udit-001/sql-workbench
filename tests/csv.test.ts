@@ -7,6 +7,28 @@ import {
 } from "../src/bench-kit/csv";
 
 describe("parseCsv", () => {
+  it("rejects binary files with a clear message instead of garbage fields", () => {
+    // PNG signature: 0x89 'PNG' CRLF SUB — decoded text is full of controls.
+    const png = String.fromCharCode(0x89) + "PNG\r\n\x1a\n" + "\0".repeat(64) + "ÿÿÿÿ";
+    expect(() => parseCsv(png, { delimiter: ",", hasHeader: true })).toThrow(
+      /looks binary/,
+    );
+  });
+
+  it("rejects UTF-16 text (NUL-interleaved) with the same binary message", () => {
+    const utf16 = "i,d\0,\0n\0a\0m\0e\0\n\0";
+    expect(() => parseCsv(utf16, { delimiter: ",", hasHeader: true })).toThrow(/looks binary/);
+  });
+
+  it("still parses text with the occasional stray control character", () => {
+    let text = "name,note\n";
+    for (let i = 0; i < 400; i++) text += `row${i},ok\n`;
+    // One control char mid-file (~0.1% density, sniff threshold is 5%).
+    text = text.slice(0, 600) + "\x01" + text.slice(601);
+    const parsed = parseCsv(text, { delimiter: ",", hasHeader: true });
+    expect(parsed.rows.length).toBe(400);
+  });
+
   it("parses simple comma rows with a header", () => {
     const parsed = parseCsv("date,region,amount\n2024-01-03,south_asia,98\n2024-01-04,europe,29.5", {
       delimiter: ",",
