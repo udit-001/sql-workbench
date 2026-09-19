@@ -4,7 +4,7 @@
 
 | Light | Dark |
 | --- | --- |
-| ![SQL Workbench, light theme](bench-light.png) | ![SQL Workbench, dark theme](bench-dark.png) |
+| ![SQL Workbench, light theme](docs/screenshots/bench-light.png) | ![SQL Workbench, dark theme](docs/screenshots/bench-dark.png) |
 
 ## What you get
 
