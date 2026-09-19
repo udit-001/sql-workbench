@@ -72,10 +72,20 @@
         border-radius: 4px; padding: 0 4px; font-size: 0.85em;
       }
       pre {
+        position: relative;
         background: var(--page-surface); border: 1px solid var(--page-border);
         border-radius: 8px; padding: 12px 14px; overflow-x: auto;
         font: 13px/1.55 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
       }
+      .copy-btn {
+        position: absolute; top: 8px; right: 8px;
+        font: 600 11px/1 Inter, system-ui, sans-serif;
+        color: var(--page-muted); background: var(--page-bg);
+        border: 1px solid var(--page-border); border-radius: 6px;
+        padding: 5px 8px; cursor: pointer; opacity: 0; transition: opacity .12s;
+      }
+      pre:hover .copy-btn, .copy-btn:focus-visible { opacity: 1; }
+      .copy-btn:hover { color: var(--page-ink); border-color: var(--page-accent); }
       pre code { color: var(--page-ink); }
       table { border-collapse: collapse; font-size: .9rem; width: 100%; }
       th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--page-border); vertical-align: top; }
