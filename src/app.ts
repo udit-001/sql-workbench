@@ -22,6 +22,7 @@ import { layoutTables, loadRelations, loadSchema } from "./bench-kit/schema";
 import { createThemeController } from "./bench-kit/theme-controller";
 import type { Theme } from "./bench-kit/theme";
 import { WasmEngine } from "./bench-kit/wasm/wasm-engine";
+import { WorkerRpcError } from "./bench-kit/wasm/worker-rpc";
 import { DEMO_DATASET } from "./demo-dataset";
 import { DiagramPane } from "./ui/diagram";
 import { DomUi } from "./ui/dom-ui";
@@ -333,15 +334,22 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
   }
 
   /** Submit what's in the editor; blank is a no-op; journaled immediately.
-      Infrastructural engine failures (crashed worker, dead WASM) reject out
-      of submit — they are not learner SQL errors, so they surface through
-      the boot-error panel instead of vanishing as unhandled rejections. */
+      Infrastructural engine failures (crashed worker, stuck query) reject
+      out of submit — one recovery attempt is made (fresh worker, re-seed,
+      replay imports); if that fails too, the boot-error panel says so. */
   async function run(sql: string): Promise<Outcome | undefined> {
     let outcome: Outcome | undefined;
     try {
       outcome = await bench.submit(sql);
     } catch (err) {
       console.error("[sql-workbench] engine failure", err);
+      // The rejection object is the death certificate: by the time this
+      // catch runs, another caller may already have recovered the engine,
+      // so the current dead-flag alone would misreport a healthy engine.
+      if (engine.dead || err instanceof WorkerRpcError) {
+        await recoverEngine();
+        return undefined; // the failed query was lost; the editor still has it
+      }
       ui.showBootError("The database engine failed — reload the page to restart it.");
       return undefined;
     }
@@ -349,6 +357,33 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
     // Dirty tracking lives in Bench: submit() is its single writer.
     if (outcome) await recordQuery(sql.trim(), outcome);
     return outcome;
+  }
+
+  let recovering = false;
+
+  /** One-shot recovery after a worker crash or stuck query: respawn the
+      worker, re-seed the current dataset, replay persisted imports. The
+      incident itself is NOT journaled — the journal records learner
+      actions, not infrastructure failures. Idempotent via `recovering`:
+      several pending rejections collapse into one recovery. */
+  async function recoverEngine(): Promise<void> {
+    if (recovering) return;
+    recovering = true;
+    try {
+      if (!engine.dead) return; // someone else already recovered it
+      ui.setStatus("The database engine crashed — restarting…");
+      engine.respawn();
+      if (engine.isDisposed || engine.dead) throw new Error("engine could not restart");
+      await engine.load(currentDataset.seedStatements);
+      await replayImports();
+      await refreshSchema(currentDataset.title);
+      ui.setStatus("The database engine restarted — your data is restored; run your query again.");
+    } catch (err) {
+      console.error("[sql-workbench] engine recovery failed", err);
+      ui.showBootError("The database engine failed — reload the page to restart it.");
+    } finally {
+      recovering = false;
+    }
   }
 
   $("run-btn").addEventListener("click", () => void run(editor.value));
@@ -563,6 +598,12 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
       ui.setStatus("Sample data restored");
     } catch (err) {
       console.error("[sql-workbench] reset failed", err);
+      if (engine.dead || err instanceof WorkerRpcError) {
+        // Recovery re-seeds as part of restarting, which is the reset the
+        // learner asked for — let it report its own outcome.
+        await recoverEngine();
+        return;
+      }
       ui.setStatus("Reset failed — see console");
     } finally {
       resetButton.disabled = false;
@@ -602,7 +643,16 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
       }
     }
 
-    const outcome = await engine.run(selection.script);
+    let outcome;
+    try {
+      outcome = await engine.run(selection.script);
+    } catch (err) {
+      console.error("[sql-workbench] import hit an engine failure", err);
+      if (engine.dead || err instanceof WorkerRpcError) await recoverEngine();
+      throw new Error(
+        "The database engine crashed during the import — it has been restarted; try the import again.",
+      );
+    }
     if (outcome.kind === "error") throw new Error(outcome.message); // shown in the modal
 
     const record: ImportedTable = {
