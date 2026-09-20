@@ -1,4 +1,5 @@
 import type { DiagramNode, Relation, SchemaTable } from "../bench-kit/schema";
+import { formatCount } from "../bench-kit/format";
 
 /**
  * Entity diagram (LEARN-209), hand-rolled SVG following the
@@ -145,7 +146,7 @@ export class DiagramPane {
     const count = text(
       box.x + BOX_W - 12,
       box.y + 18,
-      `${box.table.rowCount.toLocaleString("en-US")} rows`,
+      `${formatCount(box.table.rowCount)} rows`,
       "diagram-tag-text",
     );
     count.setAttribute("text-anchor", "end");

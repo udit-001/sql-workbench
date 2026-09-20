@@ -1,4 +1,5 @@
 import type { SchemaTable } from "../bench-kit/schema";
+import { formatCount } from "../bench-kit/format";
 
 /**
  * Left panel listing the loaded dataset's tables with row counts
@@ -61,7 +62,7 @@ export class SchemaPanel {
       count.className = "ty";
       count.title = "rows in table";
       count.style.marginLeft = "auto";
-      count.textContent = table.rowCount.toLocaleString("en-US");
+      count.textContent = formatCount(table.rowCount);
       header.append(count);
       header.addEventListener("click", () => block.classList.toggle("open"));
 

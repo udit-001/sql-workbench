@@ -14,6 +14,7 @@ import { createCoalescedQueue } from "./bench-kit/coalesced-queue";
 import { buildImportScript, parseCsv } from "./bench-kit/csv";
 import { deleteImportedTable, listImportedTables, saveImportedTable, type ImportedTable } from "./bench-kit/csv-store";
 import { eventsToMarkdown } from "./bench-kit/export-markdown";
+import { formatCount } from "./bench-kit/format";
 import { fetchFixture } from "./bench-kit/fixture";
 import { highlightSql } from "./bench-kit/highlight";
 import type { Outcome } from "./bench-kit/engine";
@@ -704,7 +705,7 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
       refreshHighlight();
     }
     ui.setStatus(
-      `Imported ${selection.rows.toLocaleString("en-US")} rows into ${selection.tableName}`,
+      `Imported ${formatCount(selection.rows)} rows into ${selection.tableName}`,
     );
     selectView("results", host.querySelector('[data-seg="results"]') ?? host);
     importModal.close();

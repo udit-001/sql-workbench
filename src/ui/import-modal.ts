@@ -1,4 +1,5 @@
 import { buildImportScript, parseCsv, sanitizeTableName, type ParsedCsv } from "../bench-kit/csv";
+import { formatCount } from "../bench-kit/format";
 
 export interface ImportSelection {
   tableName: string;
@@ -155,14 +156,14 @@ export class ImportModal {
       this.fileMeta.replaceChildren();
       this.fileMeta.append(
         `${this.filename} · ${sizeKb} kB · `,
-        strong(`${parsed.rows.length.toLocaleString("en-US")} rows × ${parsed.columns.length} columns`),
+        strong(`${formatCount(parsed.rows.length)} rows × ${parsed.columns.length} columns`),
         " detected",
       );
       this.renderPreview(parsed);
       this.errorBox.hidden = true;
       this.importButton.disabled = false;
       this.importButton.textContent =
-        `Import ${parsed.rows.length.toLocaleString("en-US")} row${parsed.rows.length === 1 ? "" : "s"}`;
+        `Import ${formatCount(parsed.rows.length)} row${parsed.rows.length === 1 ? "" : "s"}`;
     } catch (err) {
       this.errorBox.textContent = (err as Error)?.message ?? String(err);
       this.errorBox.hidden = false;

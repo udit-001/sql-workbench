@@ -1,4 +1,5 @@
 import type { WorkbenchEvent } from "../bench-kit/journal";
+import { formatCount } from "../bench-kit/format";
 
 /**
  * History tab (LEARN-203): every recorded run with ✓/✗ styling, newest
@@ -64,7 +65,7 @@ export class HistoryTab {
       if (!event.ok) main.classList.add("jr-failed");
       main.title = `${event.fixture} — ${event.sql}`;
     } else if (event.type === "csv-import") {
-      main.textContent = `Imported CSV ${event.name} (${event.rows.toLocaleString("en-US")} rows)`;
+      main.textContent = `Imported CSV ${event.name} (${formatCount(event.rows)} rows)`;
     } else {
       main.textContent = `Reset sample data ${event.fixture}`;
     }
@@ -74,7 +75,7 @@ export class HistoryTab {
     meta.className = "jr-meta";
     meta.textContent =
       event.type === "query" && event.ok
-        ? `${when(event.ts)} · ${event.rows.toLocaleString("en-US")} row${event.rows === 1 ? "" : "s"} · ${event.ms} ms`
+        ? `${when(event.ts)} · ${formatCount(event.rows)} row${event.rows === 1 ? "" : "s"} · ${event.ms} ms`
         : when(event.ts);
     row.append(meta);
 
@@ -86,7 +87,8 @@ function when(ts: number): string {
   const seconds = Math.round((Date.now() - ts) / 1000);
   if (seconds < 10) return "just now";
   if (seconds < 3600) return `${Math.floor(seconds / 60)} min ago`;
-  return new Date(ts).toLocaleString([], {
+  // Same convention as formatCount: en-US, machine-independent (SQLWB-7).
+  return new Date(ts).toLocaleString("en-US", {
     month: "short",
     day: "numeric",
     hour: "2-digit",

@@ -1,5 +1,6 @@
 import type { Outcome, QueryOutcome } from "../bench-kit/engine";
 import type { BenchUi } from "../bench-kit/bench";
+import { formatCount } from "../bench-kit/format";
 import { explainSqlError, type ErrorContext } from "../bench-kit/error-help";
 
 /**
@@ -187,8 +188,4 @@ function renderOk(outcome: QueryOutcome): DocumentFragment {
   table.append(head, body);
   frag.append(table);
   return frag;
-}
-
-function formatCount(n: number): string {
-  return n.toLocaleString("en-US");
 }

@@ -1,4 +1,5 @@
 import type { QueryEvent, WorkbenchEvent } from "./journal";
+import { formatCount } from "./format";
 
 /**
  * Standalone export (LEARN-197): the journal as chat-paste-ready Markdown,
@@ -58,12 +59,9 @@ function localDay(ts: number): string {
 }
 
 function formatStamp(ts: number): string {
-  return `${localDay(ts)} ${new Date(ts).toLocaleTimeString([], {
+  return `${localDay(ts)} ${new Date(ts).toLocaleTimeString("en-US", {
     hour: "2-digit",
     minute: "2-digit",
+    hour12: false,
   })}`;
-}
-
-function formatCount(n: number): string {
-  return n.toLocaleString("en-US");
 }
