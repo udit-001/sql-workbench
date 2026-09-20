@@ -58,6 +58,9 @@ export class SqlWorkbench extends HTMLElement {
       onEvent: (event) => {
         this.dispatchEvent(new CustomEvent("workbench-event", { detail: event }));
       },
+      onStateChange: (state) => {
+        this.dispatchEvent(new CustomEvent("state-change", { detail: state }));
+      },
     });
   }
 
@@ -97,6 +100,11 @@ export class SqlWorkbench extends HTMLElement {
       `workbench-event` CustomEvent carries as `detail`. */
   events(): Promise<WorkbenchEvent[]> {
     return this.require().events();
+  }
+
+  /** Current number of tables in the database. */
+  get tableCount(): number {
+    return this.require().tableCount;
   }
 
   private require(): WorkbenchHandle {

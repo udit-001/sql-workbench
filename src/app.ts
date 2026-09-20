@@ -95,6 +95,12 @@ export const BENCH_TEMPLATE = `
       <div class="jr-note" id="history-empty">No runs yet — press Ctrl+Enter to run a query.</div>
     </section>
 
+    <div class="empty-state" id="empty-state" hidden>
+      <div class="empty-title">Get started</div>
+      <div class="empty-hint">Write a CREATE TABLE statement and press Run, or</div>
+      <button class="empty-cta" id="empty-load-demo">Load sample dataset</button>
+    </div>
+
     <footer class="statusbar" part="statusbar" id="statusbar" aria-live="polite">Ready</footer>
   </section>
 </div>
@@ -152,6 +158,8 @@ export interface MountOptions {
   autofocus?: boolean;
   /** Called for every journaled event (query runs, resets, imports). */
   onEvent?: (event: WorkbenchEvent) => void;
+  /** Called when the bench's table count changes (empty ↔ populated). */
+  onStateChange?: (state: { tableCount: number }) => void;
 }
 
 export interface WorkbenchHandle {
@@ -166,6 +174,8 @@ export interface WorkbenchHandle {
   events(): Promise<WorkbenchEvent[]>;
   /** Apply a theme now ('light' | 'dark'); overrides host-following. */
   setTheme(theme: Theme): void;
+  /** Current number of tables in the database. */
+  tableCount: number;
   /** Tear down listeners and the engine worker. */
   dispose(): void;
 }
@@ -207,6 +217,17 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
 
   /* Card mode (LEARN-205): embedded drill variant — chrome hides via CSS. */
   if (opts.mode === "card") host.dataset.mode = "card";
+
+  /* --- Empty state (tableCount tracking) -------------------------------- */
+  let tableCount = 0;
+  const emptyState = $("empty-state");
+
+  function updateEmptyState(count: number): void {
+    if (count === tableCount) return;
+    tableCount = count;
+    emptyState.hidden = count > 0;
+    opts.onStateChange?.({ tableCount: count });
+  }
 
   const engine = WasmEngine.spawn();
 
@@ -546,6 +567,7 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
       columns: merged.flatMap((t) => t.columns.map((c) => c.name)),
     };
     diagramState.dirty = true;
+    updateEmptyState(tables.length);
     if (host.dataset.view === "diagram") await renderDiagramNow();
   }
 
@@ -764,6 +786,22 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
   host.addEventListener("dragover", dragOver);
   host.addEventListener("drop", drop);
 
+  /* Empty state: Load sample dataset button seeds the demo and hides the banner. */
+  $("empty-load-demo").addEventListener("click", () => {
+    void (async () => {
+      currentDataset = { id: DEMO_DATASET.title, title: DEMO_DATASET.title, seedStatements: DEMO_DATASET.statements };
+      await engine.load(currentDataset.seedStatements);
+      await replayImports();
+      await refreshSchema(currentDataset.title);
+      const chip = $("dataset-chip");
+      chip.textContent = `${currentDataset.title} · sample data`;
+      chip.hidden = false;
+      editor.value = DEMO_DATASET.sampleQuery;
+      refreshHighlight();
+      ui.setStatus("Sample dataset loaded");
+    })();
+  });
+
   /* ✕ on a "yours" table removes it and its stored bytes. */
   async function removeImportedTable(name: string): Promise<void> {
     if (!confirm(`Remove table "${name}"? Its saved CSV will be deleted too.`)) return;
@@ -805,6 +843,9 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
     },
     setTheme(t: Theme) {
       theme.set(t);
+    },
+    get tableCount() {
+      return tableCount;
     },
     dispose() {
       theme.dispose();

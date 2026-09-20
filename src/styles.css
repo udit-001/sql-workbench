@@ -231,6 +231,37 @@ button {
   line-height: 1.5;
 }
 
+/* Empty state banner */
+.empty-state {
+  padding: 24px 16px;
+  text-align: center;
+  border-top: 1px dashed var(--wb-border);
+  margin: 0 10px 10px;
+  border-radius: 6px;
+}
+.empty-state[hidden] { display: none; }
+.empty-title {
+  font-weight: 600;
+  color: var(--wb-text);
+  margin-bottom: 4px;
+}
+.empty-hint {
+  font-size: 0.8rem;
+  color: var(--wb-muted);
+  margin-bottom: 10px;
+}
+.empty-cta {
+  background: var(--wb-accent);
+  color: var(--wb-bg);
+  border: none;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+.empty-cta:hover { opacity: 0.9; }
+
 /* editor */
 .ed-tools {
   display: flex;
@@ -832,7 +863,8 @@ table.preview-table {
 .bench[data-mode="card"] .seg,
 .bench[data-mode="card"] .tabs,
 .bench[data-mode="card"] .statusbar,
-.bench[data-mode="card"] .kbd-hint {
+.bench[data-mode="card"] .kbd-hint,
+.bench[data-mode="card"] .empty-state {
   display: none !important;
 }
 .bench[data-mode="card"] .ed-tools {
