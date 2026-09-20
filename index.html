@@ -346,12 +346,14 @@ sql-workbench::part(run-button) { border-radius: 999px; }</code></pre>
   "title": "E-commerce sample",
   "description": "A tiny web shop: customers place orders.",
   "reset": {
-    "sql": "CREATE TABLE customers (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  region TEXT,\n  signup_date TEXT NOT NULL\n);\nINSERT INTO customers VALUES\n  (1, 'Ada Lovelace',   'europe',        '2023-11-02'),\n  (2, 'Grace Hopper',   'north_america', '2023-12-15');"
+    "sql": "CREATE TABLE ... ; INSERT INTO ..."
   }
 }</code></pre>
       <p class="desc">
-        The <code>id</code> must match the filename stem. The <code>reset.sql</code> runs on
-        every load and Reset — keep it idempotent. Seed SQL stays plain and readable; no base64.
+        The <code>reset.sql</code> contains the full seed script. See
+        <a href="https://github.com/udit-001/sql-workbench/blob/main/public/fixtures/ecommerce.json">ecommerce.json</a>
+        for the complete example. The <code>id</code> must match the filename stem. Keep seed SQL
+        plain and readable; no base64.
       </p>
 
       <h2 id="journal">Watch what learners run</h2>

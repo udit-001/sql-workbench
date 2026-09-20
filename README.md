@@ -60,12 +60,14 @@ A fixture is a JSON file that seeds the bench with tables and data. Create one a
   "kind": "sqlite-dataset",
   "version": 1,
   "title": "E-commerce sample",
-  "description": "A tiny web shop: customers place orders, orders contain items referencing products.",
+  "description": "A tiny web shop: customers place orders.",
   "reset": {
-    "sql": "CREATE TABLE customers (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  region TEXT,\n  signup_date TEXT NOT NULL\n);\nCREATE TABLE products (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  list_price REAL NOT NULL\n);\nINSERT INTO customers VALUES\n  (1, 'Ada Lovelace',   'europe',        '2023-11-02'),\n  (2, 'Grace Hopper',   'north_america', '2023-12-15'),\n  (3, 'Rene Descartes', 'europe',        '2024-01-20');\nINSERT INTO products VALUES\n  (1, 'Laptop stand',        85.00),\n  (2, 'USB-C cable',         19.00),\n  (3, 'Mechanical keyboard', 79.00);"
+    "sql": "CREATE TABLE ... ; INSERT INTO ..."
   }
 }
 ```
+
+The `reset.sql` contains the full seed script — `CREATE TABLE` + `INSERT` statements. See [`public/fixtures/ecommerce.json`](public/fixtures/ecommerce.json) for the complete example.
 
 The `id` must match the filename stem. The `reset.sql` runs on every load and Reset — keep it idempotent. Seed SQL stays plain and readable; no base64.
 
