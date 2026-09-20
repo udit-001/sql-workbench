@@ -63,3 +63,18 @@ describe("eventsToMarkdown", () => {
     expect(eventsToMarkdown([])).toMatch(/No practice runs yet/);
   });
 });
+
+describe("csv-import-removed events", () => {
+  it("renders a removal as a removal, not a reset line (LEARN-226)", () => {
+    const md = eventsToMarkdown([
+      {
+        id: "r1",
+        type: "csv-import-removed",
+        ts: Date.UTC(2026, 7, 22),
+        name: "my_sales",
+      } as WorkbenchEvent,
+    ]);
+    expect(md).toContain("- removed imported table **my_sales**");
+    expect(md).not.toContain("reset sample data");
+  });
+});

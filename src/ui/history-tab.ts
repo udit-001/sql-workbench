@@ -55,7 +55,9 @@ export class HistoryTab {
         ? event.ok
           ? "successful run"
           : "failed run"
-        : "dataset reset";
+        : event.type === "csv-import-removed"
+          ? "imported table removed"
+          : "dataset reset";
     row.append(dot);
 
     const main = document.createElement("span");
@@ -66,6 +68,8 @@ export class HistoryTab {
       main.title = `${event.fixture} — ${event.sql}`;
     } else if (event.type === "csv-import") {
       main.textContent = `Imported CSV ${event.name} (${formatCount(event.rows)} rows)`;
+    } else if (event.type === "csv-import-removed") {
+      main.textContent = `Removed imported table ${event.name}`;
     } else {
       main.textContent = `Reset sample data ${event.fixture}`;
     }

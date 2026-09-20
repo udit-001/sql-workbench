@@ -31,7 +31,15 @@ export interface DatasetResetEvent {
   fixture: string;
 }
 
-export type WorkbenchEvent = QueryEvent | CsvImportEvent | DatasetResetEvent;
+export interface CsvImportRemovedEvent {
+  id: string;
+  type: "csv-import-removed";
+  ts: number;
+  /** The SQL table name that was removed (same `name` the creating csv-import used). */
+  name: string;
+}
+
+export type WorkbenchEvent = QueryEvent | CsvImportEvent | CsvImportRemovedEvent | DatasetResetEvent;
 
 export const JOURNAL_MAX_EVENTS = 2000;
 

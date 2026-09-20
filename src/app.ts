@@ -775,6 +775,14 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
     }
     await deleteImportedTable(name, namespace);
     await refreshSchema(currentDataset.title);
+    // The removal is a learner action (✕ + confirm) — it belongs in the
+    // agent's feed, per the LEARN-226 contract.
+    await recordEvent({
+      id: crypto.randomUUID(),
+      type: "csv-import-removed",
+      ts: Date.now(),
+      name,
+    });
     ui.setStatus(`Removed ${name}`);
   }
 

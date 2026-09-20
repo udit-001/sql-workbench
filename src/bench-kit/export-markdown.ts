@@ -35,6 +35,8 @@ export function eventsToMarkdown(events: WorkbenchEvent[], exportedAt = Date.now
         lines.push(...queryLines(event), "");
       } else if (event.type === "csv-import") {
         lines.push(`- imported CSV **${event.name}** (${formatCount(event.rows)} rows)`, "");
+      } else if (event.type === "csv-import-removed") {
+        lines.push(`- removed imported table **${event.name}**`, "");
       } else {
         lines.push(`- reset sample data **${event.fixture}**`, "");
       }

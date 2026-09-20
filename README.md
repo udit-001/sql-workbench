@@ -51,7 +51,7 @@ const md = await bench.exportMarkdown();           // session journal as Markdow
 const events = await bench.events();               // journaled events, newest first
 bench.setTheme("dark");
 bench.addEventListener("workbench-event", (e) => {
-  // e.detail: { type: "query" | "dataset-reset" | "csv-import", ... }
+  // e.detail: { type: "query" | "dataset-reset" | "csv-import" | "csv-import-removed", ... }
 });
 ```
 

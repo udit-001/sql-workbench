@@ -329,7 +329,7 @@ sql-workbench::part(run-button) { border-radius: 999px; }</code></pre>
         whole journal on demand, or export it as Markdown:
       </p>
 <pre data-copy><code>bench.addEventListener("workbench-event", (e) =&gt; {
-  // e.detail: { type: "query" | "csv-import" | "dataset-reset", sql, ok, rows, ms, error … }
+  // e.detail: { type: "query" | "csv-import" | "dataset-reset" | "csv-import-removed", sql, ok, rows, ms, error … }
 });
 
 const events = await bench.events();      // newest first, same shapes
