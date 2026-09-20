@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SQL Workbench</title>
+    <meta name="description" content="A zero-install SQL practice bench. Write queries, import data, practice SQL in your browser." />
+    <link rel="canonical" href="https://udit-001.github.io/sql-workbench/standalone.html" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#2e3440" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%232e3440'/%3E%3Cpath d='M3 5l3 3-3 3M7.5 11H13' stroke='%2381a1c1' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+    <script>
+      ;(function () {
+        var t = localStorage.getItem('pharos_theme')
+        if (!t || t === 'system') {
+          t = window.matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light'
+        }
+        document.documentElement.dataset.theme = t
+      })()
+    </script>
+    <style>
+      :root {
+        --page-bg: #ffffff;
+        --page-ink: #3b4252;
+        --page-accent: #5e81ac;
+        --page-border: #e2e6ee;
+      }
+      [data-theme="dark"] {
+        --page-bg: #2e3440;
+        --page-ink: #d8dee9;
+        --page-accent: #81a1c1;
+        --page-border: #434c5e;
+      }
+      * { box-sizing: border-box; margin: 0; }
+      body {
+        background: var(--page-bg);
+        color: var(--page-ink);
+        font: 15px/1.5 Inter, system-ui, sans-serif;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 16px;
+        border-bottom: 1px solid var(--page-border);
+        flex: none;
+      }
+      header .name { font-weight: 600; }
+      header .spacer { flex: 1; }
+      header a {
+        font-size: 13px;
+        color: var(--page-accent);
+        text-decoration: none;
+      }
+      header a:hover { text-decoration: underline; }
+      sql-workbench {
+        flex: 1;
+        display: block;
+      }
+    </style>
+    <script type="module" src="/src/main.ts"></script>
+  </head>
+  <body>
+    <header>
+      <span class="name">sql-workbench</span>
+      <span class="spacer"></span>
+      <a href="index.html">Docs</a>
+      <a href="https://github.com/udit-001/sql-workbench">GitHub</a>
+    </header>
+    <sql-workbench autofocus></sql-workbench>
+  </body>
+</html>

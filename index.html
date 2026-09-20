@@ -251,6 +251,7 @@
         <li><a href="#try">Live demo</a></li>
         <li><a href="#quick-start">Quick start</a></li>
         <li><a href="#card">Card mode</a></li>
+        <li><a href="#empty">Empty state</a></li>
         <li><a href="#theme">Theming</a></li>
         <li><a href="#data">Data isolation</a></li>
         <li><a href="#starter">Starter query</a></li>
@@ -357,6 +358,26 @@ sql-workbench::part(run-button) { border-radius: 999px; }</code></pre>
         plain and readable; no base64.
       </p>
 
+      <h2 id="empty">Empty state: start from scratch</h2>
+      <p class="desc">
+        Omit <code>dataset</code> and the bench starts empty — no tables, no data.
+        Users see a prompt to create a table or load a sample. Hosts can override
+        the empty state via <code>slot="empty"</code> or react to
+        <code>state-change</code> events.
+      </p>
+      <p class="desc">
+        <strong>Try it:</strong> <a href="standalone.html">Open the standalone bench</a> —
+        bookmark it for quick SQL practice.
+      </p>
+<pre data-copy><code>&lt;sql-workbench namespace="my-app"&gt;&lt;/sql-workbench&gt;
+
+&lt;script&gt;
+  const bench = document.querySelector("sql-workbench");
+  bench.addEventListener("state-change", (e) =&gt; {
+    console.log("tables:", e.detail.tableCount);
+  });
+&lt;/script&gt;</code></pre>
+
       <h2 id="journal">Watch what learners run</h2>
       <p class="desc">
         Every query, import, and reset is journaled. Get them live as DOM events, read the
@@ -392,7 +413,9 @@ const md = await bench.exportMarkdown();  // paste-ready practice log</code></pr
             <tr><td><code>events()</code></td><td>journal entries, newest first</td></tr>
             <tr><td><code>exportMarkdown()</code></td><td>journal as a Markdown practice log</td></tr>
             <tr><td><code>setTheme(t)</code></td><td><code>"light"</code> or <code>"dark"</code></td></tr>
+            <tr><td><code>tableCount</code></td><td>current number of tables</td></tr>
             <tr><td><code>workbench-event</code></td><td>fired for every journaled event</td></tr>
+            <tr><td><code>state-change</code></td><td>fired when table count changes</td></tr>
           </table>
         </div>
       </div>

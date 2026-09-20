@@ -6,6 +6,8 @@
 | --- | --- |
 | ![SQL Workbench, light theme](docs/screenshots/bench-light.png) | ![SQL Workbench, dark theme](docs/screenshots/bench-dark.png) |
 
+**Just want to practice?** [Open the standalone bench](https://udit-001.github.io/sql-workbench/standalone.html) — starts empty, bookmark it.
+
 ## Quick start
 
 ```html
