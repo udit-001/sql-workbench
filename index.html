@@ -264,7 +264,7 @@
         This is the real component running on this page — not a screenshot. Run a query,
         open the schema, check the diagram.
       </p>
-      <div class="demo-frame"><sql-workbench id="hero" namespace="docs-demo"></sql-workbench></div>
+      <div class="demo-frame"><sql-workbench id="hero" namespace="docs-demo" dataset="ecommerce"></sql-workbench></div>
 
       <h2 id="quick-start">Add it to your page</h2>
       <p class="desc">One script, one element. The file is ~1.5 MB (614 KB gzipped) and makes
@@ -285,7 +285,7 @@
         for embedding inside lesson content where the surrounding page provides the context.
         This one below is the same component, same script:
       </p>
-      <div class="demo-frame"><sql-workbench id="card-demo" namespace="docs-card" mode="card" sql="SELECT region, COUNT(*) AS orders&#10;FROM orders o JOIN customers c ON c.id = o.customer_id&#10;GROUP BY region;"></sql-workbench></div>
+      <div class="demo-frame"><sql-workbench id="card-demo" namespace="docs-card" mode="card" dataset="ecommerce" sql="SELECT region, COUNT(*) AS orders&#10;FROM orders o JOIN customers c ON c.id = o.customer_id&#10;GROUP BY region;"></sql-workbench></div>
 
       <h2 id="theme">It matches your app, not the other way round</h2>
       <p class="desc">
