@@ -9,7 +9,8 @@
  * journal, schema, CSV, export — is internal.
  */
 import styles from "./styles.css?inline";
-import { Bench } from "./bench-kit/bench";
+import { Bench, mutatesData } from "./bench-kit/bench";
+import { createCoalescedQueue } from "./bench-kit/coalesced-queue";
 import { buildImportScript, parseCsv } from "./bench-kit/csv";
 import { deleteImportedTable, listImportedTables, saveImportedTable, type ImportedTable } from "./bench-kit/csv-store";
 import { eventsToMarkdown } from "./bench-kit/export-markdown";
@@ -356,6 +357,11 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
     // Blank queries are a no-op; real runs land in the journal immediately.
     // Dirty tracking lives in Bench: submit() is its single writer.
     if (outcome) await recordQuery(sql.trim(), outcome);
+    // A mutation attempt can change the schema (even a failed multi-
+    // statement script may have applied its early statements) — keep the
+    // panel, diagram, and did-you-mean context truthful without waiting
+    // for the next import/reset.
+    if (mutatesData(sql)) queueSchemaRefresh();
     return outcome;
   }
 
@@ -488,6 +494,21 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
 
   async function refreshSchema(datasetTitle: string): Promise<void> {
     renderSchema(await loadSchema(engine), datasetTitle);
+  }
+
+  /** One schema refresh at a time; pushes landing mid-flight coalesce into
+      a single rerun (see CoalescedQueue — out-of-order snapshot renders are
+      the bug this prevents). Tasks own their errors: a failed refresh is
+      logged, and the next mutation retries. */
+  const schemaRefreshes = createCoalescedQueue();
+  function queueSchemaRefresh(): void {
+    schemaRefreshes.push(async () => {
+      try {
+        await refreshSchema(currentDataset.title);
+      } catch (err) {
+        console.error("[sql-workbench] schema refresh failed", err);
+      }
+    });
   }
 
   /* The diagram renders lazily: SVG text measurement returns 0 inside a
