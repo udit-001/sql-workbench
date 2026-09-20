@@ -323,6 +323,26 @@ sql-workbench::part(run-button) { border-radius: 999px; }</code></pre>
         named dataset instead of the built-in demo.
       </p>
 
+      <h2 id="fixtures">Pre-built datasets with fixtures</h2>
+      <p class="desc">
+        A fixture is a JSON file that seeds the bench with tables and data on load. Create one
+        at <code>fixtures/&lt;id&gt;.json</code>, then load it with <code>dataset="&lt;id&gt;"</code>.
+      </p>
+<pre data-copy><code>{
+  "id": "ecommerce",
+  "kind": "sqlite-dataset",
+  "version": 1,
+  "title": "E-commerce sample",
+  "description": "A tiny web shop: customers place orders.",
+  "reset": {
+    "sql": "CREATE TABLE customers (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL\n);\nINSERT INTO customers VALUES (1, 'Ada Lovelace');"
+  }
+}</code></pre>
+      <p class="desc">
+        The <code>id</code> must match the filename stem. The <code>reset.sql</code> runs on
+        every load and Reset — keep it idempotent. Seed SQL stays plain and readable; no base64.
+      </p>
+
       <h2 id="journal">Watch what learners run</h2>
       <p class="desc">
         Every query, import, and reset is journaled. Get them live as DOM events, read the
