@@ -334,10 +334,25 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
   /* The one place "which dataset is loaded" lives: slug id for journal
      events, display title, and the statements Reset re-executes. */
   let currentDataset: { id: string; title: string; seedStatements: string[] } = {
-    id: DEMO_DATASET.title,
-    title: DEMO_DATASET.title,
-    seedStatements: DEMO_DATASET.statements,
+    id: "empty",
+    title: "Empty",
+    seedStatements: [],
   };
+
+  /** Load a dataset: seed the engine, refresh schema, update the chip. */
+  async function loadDataset(id: string, title: string, statements: string[], opts?: { starterQuery?: string }): Promise<void> {
+    currentDataset = { id, title, seedStatements: statements };
+    await engine.load(statements);
+    await replayImports();
+    await refreshSchema(title);
+    const chip = $("dataset-chip");
+    chip.textContent = `${title} · sample data`;
+    chip.hidden = false;
+    if (opts?.starterQuery) {
+      editor.value = opts.starterQuery;
+      refreshHighlight();
+    }
+  }
 
   /** Journal an event, then bring the History tab back in sync. */
   async function recordEvent(event: WorkbenchEvent): Promise<void> {
@@ -576,30 +591,26 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
   // console + visible panel.
   void (async () => {
   try {
-    // Boot query precedence: explicit sql attr > dataset-derived > demo sample.
+    // Boot query precedence: explicit sql attr > dataset-derived > empty.
     let starterQuery: string | null = opts.sql ?? null;
 
     if (opts.dataset) {
       const fixture = await fetchFixture(opts.dataset); // throws plain-language FixtureError
-      currentDataset = { id: opts.dataset, title: fixture.title, seedStatements: [fixture.sql] };
+      await loadDataset(opts.dataset, fixture.title, [fixture.sql]);
       starterQuery = null; // filled from the loaded schema below
+    } else {
+      await engine.load([]);
+      await replayImports();
+      await renderSchema(await loadSchema(engine), currentDataset.title);
     }
-    if (starterQuery === null) starterQuery = DEMO_DATASET.sampleQuery;
 
-    await engine.load(currentDataset.seedStatements);
-    await replayImports();
     const tables = await loadSchema(engine);
-    await renderSchema(tables, currentDataset.title);
-
     if (!starterQuery && tables[0]) {
       starterQuery = `SELECT *\nFROM ${tables[0].name}\nLIMIT 10;`;
     }
-    editor.value = starterQuery;
+    editor.value = starterQuery ?? "";
     refreshHighlight();
 
-    const chip = $("dataset-chip");
-    chip.textContent = `${currentDataset.title} · sample data`;
-    chip.hidden = false;
     const journal = await journalPromise;
     await history.refresh(await journal.list());
     // Autofocus is opt-in (opts.autofocus / the autofocus attribute), and
@@ -789,15 +800,9 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
   /* Empty state: Load sample dataset button seeds the demo and hides the banner. */
   $("empty-load-demo").addEventListener("click", () => {
     void (async () => {
-      currentDataset = { id: DEMO_DATASET.title, title: DEMO_DATASET.title, seedStatements: DEMO_DATASET.statements };
-      await engine.load(currentDataset.seedStatements);
-      await replayImports();
-      await refreshSchema(currentDataset.title);
-      const chip = $("dataset-chip");
-      chip.textContent = `${currentDataset.title} · sample data`;
-      chip.hidden = false;
-      editor.value = DEMO_DATASET.sampleQuery;
-      refreshHighlight();
+      await loadDataset(DEMO_DATASET.title, DEMO_DATASET.title, DEMO_DATASET.statements, {
+        starterQuery: DEMO_DATASET.sampleQuery,
+      });
       ui.setStatus("Sample dataset loaded");
     })();
   });
