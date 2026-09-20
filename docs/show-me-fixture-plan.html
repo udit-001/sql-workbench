@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fixture & Empty State Plan</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --surface: #f3f5f9;
+      --border: #e2e6ee;
+      --ink: #3b4252;
+      --muted: #767e8c;
+      --accent: #5e81ac;
+    }
+    [data-theme="dark"] {
+      --bg: #2e3440;
+      --surface: #3b4252;
+      --border: #434c5e;
+      --ink: #d8dee9;
+      --muted: #9aa5b5;
+      --accent: #81a1c1;
+    }
+    * { box-sizing: border-box; margin: 0; }
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font: 16px/1.5 Inter, system-ui, sans-serif;
+      padding: 48px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    h1 { font-size: 1.5rem; margin-bottom: 8px; }
+    .subtitle { color: var(--muted); margin-bottom: 32px; }
+    h2 { font-size: 1.1rem; margin: 32px 0 12px; color: var(--accent); }
+    
+    /* Flow diagram */
+    .flow {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 16px 0;
+      flex-wrap: wrap;
+    }
+    .box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 14px;
+    }
+    .box.component {
+      border-color: var(--accent);
+      background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+    }
+    .box.host {
+      border-color: #a3be8c;
+      background: color-mix(in srgb, #a3be8c 10%, var(--surface));
+    }
+    .arrow {
+      color: var(--muted);
+      font-size: 20px;
+    }
+    .label {
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+    }
+    
+    /* Responsibility table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+    th, td {
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    th { color: var(--muted); font-weight: 600; }
+    
+    /* Sequence */
+    .sequence {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      margin: 16px 0;
+      font-size: 13px;
+      font-family: ui-monospace, monospace;
+      line-height: 1.8;
+    }
+    .seq-note { color: var(--muted); }
+    .seq-event { color: var(--accent); font-weight: 600; }
+    .seq-action { color: #a3be8c; }
+    
+    /* Component tree */
+    .tree {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      margin: 16px 0;
+      font-family: ui-monospace, monospace;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .tree-component { color: var(--accent); }
+    .tree-host { color: #a3be8c; }
+    .tree-comment { color: var(--muted); }
+    
+    /* Fixture format */
+    .fixture {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      margin: 16px 0;
+      font-family: ui-monospace, monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      overflow-x: auto;
+    }
+    .fixture-key { color: var(--accent); }
+    .fixture-string { color: #a3be8c; }
+    .fixture-comment { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <h1>Fixture & Empty State Plan</h1>
+  <p class="subtitle">Architecture decisions for sql-workbench component</p>
+  
+  <h2>1. Fixture Format (v1 — keep as-is)</h2>
+  <div class="fixture">
+    <span class="fixture-comment">// One file per fixture at fixtures/&lt;id&gt;.json</span><br>
+    {<br>
+    &nbsp;&nbsp;<span class="fixture-key">"id"</span>: <span class="fixture-string">"ecommerce"</span>,<br>
+    &nbsp;&nbsp;<span class="fixture-key">"kind"</span>: <span class="fixture-string">"sqlite-dataset"</span>,<br>
+    &nbsp;&nbsp;<span class="fixture-key">"version"</span>: 1,<br>
+    &nbsp;&nbsp;<span class="fixture-key">"title"</span>: <span class="fixture-string">"E-commerce sample"</span>,<br>
+    &nbsp;&nbsp;<span class="fixture-key">"reset"</span>: {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="fixture-key">"sql"</span>: <span class="fixture-string">"CREATE TABLE ... ; INSERT INTO ..."</span><br>
+    &nbsp;&nbsp;}<br>
+    }
+  </div>
+  <p style="font-size: 14px; color: var(--muted);">
+    Agents write SQL fluently. The format matches how they think. 
+    Builder UI can parse SQL to render grids — no format change needed.
+  </p>
+  
+  <h2>2. Empty State — Responsibility Split</h2>
+  <div class="sequence">
+    <span class="seq-note">/* Component boots empty (no dataset attr) */</span><br>
+    <span class="seq-action">Component</span> → <span class="seq-event">state-change { tableCount: 0 }</span><br>
+    <span class="seq-note">/* Host renders its own empty UI */</span><br>
+    <span class="seq-action">Host</span> → show "Create a table or load data"<br>
+    <br>
+    <span class="seq-note">/* User runs CREATE TABLE */</span><br>
+    <span class="seq-action">User</span> → <span class="seq-action">Component</span>: run("CREATE TABLE ...")<br>
+    <span class="seq-action">Component</span> → <span class="seq-event">state-change { tableCount: 1 }</span><br>
+    <span class="seq-note">/* Host hides empty UI */</span><br>
+    <span class="seq-action">Host</span> → hides empty state
+  </div>
+  
+  <h2>3. Component Tree</h2>
+  <div class="tree">
+    <span class="tree-component">&lt;HostPage&gt;</span><br>
+    &nbsp;&nbsp;<span class="tree-component">&lt;sql-workbench</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="tree-comment">onStateChange={...}</span><br>
+    &nbsp;&nbsp;<span class="tree-component">/&gt;</span> <span class="tree-comment">← owns state, emits events</span><br>
+    &nbsp;&nbsp;<span class="tree-host">&lt;EmptyState</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="tree-comment">visible={tableCount === 0}</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="tree-comment">cta="Load sample data"</span><br>
+    &nbsp;&nbsp;<span class="tree-host">/&gt;</span> <span class="tree-comment">← owns presentation</span><br>
+    <span class="tree-component">&lt;/HostPage&gt;</span>
+  </div>
+  
+  <h2>4. Responsibility Split</h2>
+  <table>
+    <tr>
+      <th style="width: 50%;">Component (sql-workbench)</th>
+      <th>Host (learn-tool, standalone, etc.)</th>
+    </tr>
+    <tr>
+      <td>Track <code>tableCount</code></td>
+      <td>Decide what empty looks like</td>
+    </tr>
+    <tr>
+      <td>Emit <code>state-change</code> event</td>
+      <td>Write the copy</td>
+    </tr>
+    <tr>
+      <td>Run SQL, manage schema, journal</td>
+      <td>Choose the CTA (load fixture, tutorial, etc.)</td>
+    </tr>
+  </table>
+  
+  <p style="margin-top: 24px; padding: 12px 16px; background: color-mix(in srgb, var(--accent) 10%, var(--surface)); border-radius: 8px; font-size: 14px;">
+    <strong>Same pattern as theme:</strong> component reads, host owns. Component stays deep 
+    (small interface, lots of behaviour). Embedders compose their own UX.
+  </p>
+</body>
+</html>

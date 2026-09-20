@@ -15,6 +15,14 @@ if (!html.includes(devEntries)) throw new Error("index.html dev entries missing 
 html = html.replace(devEntries, prodEntries);
 writeFileSync("dist/index.html", html);
 
+// Standalone page: replace dev entry with released component.
+let standalone = readFileSync("standalone.html", "utf8");
+const standaloneDevEntry = '<script type="module" src="/src/main.ts"></script>';
+const standaloneProdEntry = '<script type="module" src="./sql-workbench.js"></script>';
+if (!standalone.includes(standaloneDevEntry)) throw new Error("standalone.html dev entry missing or drifted");
+standalone = standalone.replace(standaloneDevEntry, standaloneProdEntry);
+writeFileSync("dist/standalone.html", standalone);
+
 cpSync("public/fixtures", "dist/fixtures", { recursive: true });
 cpSync("public/og-image.png", "dist/og-image.png");
 console.log("pages assembled in dist/");
