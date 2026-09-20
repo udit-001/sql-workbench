@@ -329,13 +329,14 @@ sql-workbench::part(run-button) { border-radius: 999px; }</code></pre>
         at <code>fixtures/&lt;id&gt;.json</code>, then load it with <code>dataset="&lt;id&gt;"</code>.
       </p>
       <p class="desc"><strong>Schema</strong> — the built-in <code>ecommerce</code> fixture:</p>
-      <table>
+      <table style="margin-bottom: var(--space-3)">
         <tr><th>Table</th><th>Columns</th></tr>
         <tr><td><code>customers</code></td><td><code>id</code>, <code>name</code>, <code>region</code>, <code>signup_date</code></td></tr>
         <tr><td><code>products</code></td><td><code>id</code>, <code>name</code>, <code>list_price</code></td></tr>
         <tr><td><code>orders</code></td><td><code>id</code>, <code>customer_id</code> → customers, <code>order_date</code>, <code>status</code>, <code>total_amount</code>, <code>shipped_at</code></td></tr>
         <tr><td><code>order_items</code></td><td><code>id</code>, <code>order_id</code> → orders, <code>product_id</code> → products, <code>quantity</code>, <code>unit_price</code></td></tr>
       </table>
+
       <p class="desc">
         6 customers (6 regions), 4 products, 10 orders (shipped/pending/cancelled), 12 line items.
       </p>
