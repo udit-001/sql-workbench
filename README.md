@@ -41,15 +41,28 @@ One script, one element. ~1.5 MB (614 KB gzipped), zero side requests — the SQ
 
 A fixture is a JSON file that seeds the bench with tables and data. Create one at `fixtures/<id>.json`, load it with `dataset="<id>"`.
 
+**Schema** — the built-in `ecommerce` fixture:
+
+| Table | Columns |
+| --- | --- |
+| `customers` | `id`, `name`, `region`, `signup_date` |
+| `products` | `id`, `name`, `list_price` |
+| `orders` | `id`, `customer_id` → customers, `order_date`, `status` (shipped/pending/cancelled), `total_amount`, `shipped_at` |
+| `order_items` | `id`, `order_id` → orders, `product_id` → products, `quantity`, `unit_price` |
+
+**Sample rows** — 6 customers, 4 products, 10 orders, 12 line items. Customers span 6 regions (europe, north_america, africa, south_asia, middle_east). Orders mix shipped, pending, and cancelled statuses.
+
+**Fixture JSON shape:**
+
 ```json
 {
   "id": "ecommerce",
   "kind": "sqlite-dataset",
   "version": 1,
   "title": "E-commerce sample",
-  "description": "Customers, orders, products.",
+  "description": "A tiny web shop: customers place orders, orders contain items referencing products.",
   "reset": {
-    "sql": "CREATE TABLE customers (id INTEGER PRIMARY KEY, name TEXT);\nINSERT INTO customers VALUES (1, 'Ada Lovelace');"
+    "sql": "CREATE TABLE customers (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  region TEXT,\n  signup_date TEXT NOT NULL\n);\nCREATE TABLE products (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  list_price REAL NOT NULL\n);\nINSERT INTO customers VALUES\n  (1, 'Ada Lovelace',   'europe',        '2023-11-02'),\n  (2, 'Grace Hopper',   'north_america', '2023-12-15'),\n  (3, 'Rene Descartes', 'europe',        '2024-01-20');\nINSERT INTO products VALUES\n  (1, 'Laptop stand',        85.00),\n  (2, 'USB-C cable',         19.00),\n  (3, 'Mechanical keyboard', 79.00);"
   }
 }
 ```

@@ -325,8 +325,19 @@ sql-workbench::part(run-button) { border-radius: 999px; }</code></pre>
 
       <h2 id="fixtures">Pre-built datasets with fixtures</h2>
       <p class="desc">
-        A fixture is a JSON file that seeds the bench with tables and data on load. Create one
+        A fixture is a JSON file that seeds the bench with tables and data. Create one
         at <code>fixtures/&lt;id&gt;.json</code>, then load it with <code>dataset="&lt;id&gt;"</code>.
+      </p>
+      <p class="desc"><strong>Schema</strong> — the built-in <code>ecommerce</code> fixture:</p>
+      <table>
+        <tr><th>Table</th><th>Columns</th></tr>
+        <tr><td><code>customers</code></td><td><code>id</code>, <code>name</code>, <code>region</code>, <code>signup_date</code></td></tr>
+        <tr><td><code>products</code></td><td><code>id</code>, <code>name</code>, <code>list_price</code></td></tr>
+        <tr><td><code>orders</code></td><td><code>id</code>, <code>customer_id</code> → customers, <code>order_date</code>, <code>status</code>, <code>total_amount</code>, <code>shipped_at</code></td></tr>
+        <tr><td><code>order_items</code></td><td><code>id</code>, <code>order_id</code> → orders, <code>product_id</code> → products, <code>quantity</code>, <code>unit_price</code></td></tr>
+      </table>
+      <p class="desc">
+        6 customers (6 regions), 4 products, 10 orders (shipped/pending/cancelled), 12 line items.
       </p>
 <pre data-copy><code>{
   "id": "ecommerce",
@@ -335,7 +346,7 @@ sql-workbench::part(run-button) { border-radius: 999px; }</code></pre>
   "title": "E-commerce sample",
   "description": "A tiny web shop: customers place orders.",
   "reset": {
-    "sql": "CREATE TABLE customers (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL\n);\nINSERT INTO customers VALUES (1, 'Ada Lovelace');"
+    "sql": "CREATE TABLE customers (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  region TEXT,\n  signup_date TEXT NOT NULL\n);\nINSERT INTO customers VALUES\n  (1, 'Ada Lovelace',   'europe',        '2023-11-02'),\n  (2, 'Grace Hopper',   'north_america', '2023-12-15');"
   }
 }</code></pre>
       <p class="desc">
