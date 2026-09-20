@@ -361,12 +361,12 @@ sql-workbench::part(run-button) { border-radius: 999px; }</code></pre>
       <h2 id="empty">Empty state: start from scratch</h2>
       <p class="desc">
         Omit <code>dataset</code> and the bench starts empty — no tables, no data.
-        Users see a prompt to create a table or load a sample. Hosts can override
-        the empty state via <code>slot="empty"</code> or react to
-        <code>state-change</code> events.
+        Users see a prompt to create a table or load a sample. Try it below:
       </p>
+      <div class="demo-frame"><sql-workbench id="empty-demo" namespace="docs-empty" autofocus></sql-workbench></div>
       <p class="desc">
-        <strong>Try it:</strong> <a href="standalone.html">Open the standalone bench</a> —
+        Hosts can override the empty state via <code>slot="empty"</code> or react to
+        <code>state-change</code> events. <a href="standalone.html">Open standalone</a> —
         bookmark it for quick SQL practice.
       </p>
 <pre data-copy><code>&lt;sql-workbench namespace="my-app"&gt;&lt;/sql-workbench&gt;
