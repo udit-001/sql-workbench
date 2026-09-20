@@ -23,7 +23,7 @@ The bench compiles to one JavaScript file with no side requests: editor, SQLite 
 
 ```html
 <script type="module"
-        src="https://cdn.jsdelivr.net/gh/udit-001/sql-workbench@v0.2.1/dist/sql-workbench.js"></script>
+        src="https://cdn.jsdelivr.net/gh/udit-001/sql-workbench@v0.3/dist/sql-workbench.js"></script>
 
 <sql-workbench namespace="my-app" style="display:block;height:560px"></sql-workbench>
 ```

@@ -31,3 +31,27 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
+      - name: Commit rebuilt artifact + version back to main
+        # jsDelivr serves the repo tree at the tag, not the release asset —
+        # without this commit every tag URL serves the previous release's
+        # bundle. Runs after `gh release create` so the Pages build that
+        # this push triggers downloads THIS release.
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          npm version "$VERSION" --no-git-tag-version --allow-same-version
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add dist/sql-workbench.js package.json package-lock.json
+          git commit -m "chore(release): $GITHUB_REF_NAME — rebuilt dist"
+          git push origin HEAD:main
+      - name: Point the tag at the release commit
+        # The tag was pushed before the dist commit existed; jsDelivr's
+        # @version URLs resolve through the tag, so it must sit on the
+        # commit that contains the rebuilt artifact.
+        run: |
+          git tag -f "$GITHUB_REF_NAME" HEAD
+          git push --force origin "refs/tags/$GITHUB_REF_NAME"
+      - name: Purge jsDelivr cache for the tag URL
+        # Versioned URLs are cached hard; the move above needs a purge to
+        # take effect immediately. Non-fatal — cache expires on its own.
+        run: curl -fsSL "https://purge.jsdelivr.net/gh/${GITHUB_REPOSITORY}@${GITHUB_REF_NAME}/dist/sql-workbench.js" || true
