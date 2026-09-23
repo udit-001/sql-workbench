@@ -53,12 +53,12 @@ export class DomUi implements BenchUi {
     this.statusbar.textContent = text;
   }
 
-  /** Infrastructural failure (worker/WASM/fixture) — not a learner SQL error. */
+  /** Infrastructural failure (worker/WASM/fixture) — not a learner SQL error.
+   *  The message carries its own fix; no generic tail here. */
   showBootError(message: string): void {
     const panel = document.createElement("div");
     panel.className = "boot-error";
-    panel.textContent =
-      `${message} — check the console for details, then reload.`;
+    panel.textContent = message;
     this.results.replaceChildren(panel);
     this.runButton.disabled = true;
     this.setStatus("Setup failed");

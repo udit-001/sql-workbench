@@ -47,18 +47,20 @@ export function parseFixture(raw: unknown, requestedId: string): Fixture {
   }
   if (id !== requestedId) {
     fail(
-      `Asked for fixture "${requestedId}" but this file is "${id}" — the id must match the filename stem.`,
+      `Asked for the "${requestedId}" dataset, but the fixture says "${id}" — the fixture's id must match its name ("${id}.json"),`,
     );
   }
 
   if (f.kind !== "sqlite-dataset") {
     fail(
-      `Unknown fixture kind ${JSON.stringify(f.kind ?? null)} — this bench only loads sqlite-dataset (v1).`,
+      `This fixture's "kind" is ${JSON.stringify(f.kind ?? null)} — this bench only loads "sqlite-dataset". Set the kind, then reload the page.`,
     );
   }
 
   if (f.version !== 1) {
-    fail(`Unsupported fixture version ${JSON.stringify(f.version ?? null)} — expected version 1.`);
+    fail(
+      `This fixture is version ${JSON.stringify(f.version ?? null)} — this bench loads version 1 only. Update the fixture, then reload the page.`,
+    );
   }
 
   if (typeof f.title !== "string" || !f.title.trim()) {
@@ -119,21 +121,25 @@ export async function fetchDataset(ref: string): Promise<Fixture> {
     response = await fetch(url);
   } catch (err) {
     throw new FixtureError(
-      `Could not fetch fixture "${id}" from ${url}: ${(err as Error)?.message ?? String(err)}`,
+      `The dataset "${id}" didn't load — ${url} is unreachable (${(err as Error)?.message ?? String(err)}). Check the address, then reload the page.`,
     );
   }
   if (response.status === 404) {
-    throw new FixtureError(`No fixture named "${id}" was found (looked for ${url}).`);
+    throw new FixtureError(
+      `The dataset "${id}" didn't load — nothing was served at ${url}. Check that the dataset is installed there, then reload the page.`,
+    );
   }
   if (!response.ok) {
-    throw new FixtureError(`Fetching fixture "${id}" failed: HTTP ${response.status}.`);
+    throw new FixtureError(
+      `The dataset "${id}" didn't load — ${url} returned HTTP ${response.status}. Check the server, then reload the page.`,
+    );
   }
   let raw: unknown;
   try {
     raw = await response.json();
   } catch (err) {
     throw new FixtureError(
-      `Fixture "${id}" is not valid JSON: ${(err as Error)?.message ?? String(err)}`,
+      `The dataset "${id}" didn't load — ${url} didn't return JSON (${(err as Error)?.message ?? String(err)}). Fix the file, then reload the page.`,
     );
   }
   return parseFixture(raw, id);

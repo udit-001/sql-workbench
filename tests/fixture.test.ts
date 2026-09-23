@@ -44,7 +44,7 @@ describe("parseFixture", () => {
 
   it("rejects when file id differs from the requested ?fixture= value", () => {
     expect(() => parse({ ...VALID }, "shop")).toThrow(
-      /"shop" but this file is "ecommerce"/,
+      /Asked for the "shop" dataset, but the fixture says "ecommerce"/,
     );
   });
 
@@ -55,7 +55,7 @@ describe("parseFixture", () => {
   });
 
   it("rejects versions other than 1", () => {
-    expect(() => parse({ ...VALID, version: 2 })).toThrow(/version 2.*expected version 1/);
+    expect(() => parse({ ...VALID, version: 2 })).toThrow(/This fixture is version 2 — this bench loads version 1 only/);
   });
 
   it("requires a title", () => {
@@ -110,7 +110,7 @@ describe("dataset references", () => {
       vi.fn().mockResolvedValue(new Response("nope", { status: 404 })),
     );
     await expect(fetchDataset("/datasets/books")).rejects.toThrow(
-      'No fixture named "books" was found (looked for /datasets/books).',
+      "The dataset \"books\" didn't load — nothing was served at /datasets/books. Check that the dataset is installed there, then reload the page.",
     );
   });
 
@@ -120,7 +120,7 @@ describe("dataset references", () => {
       vi.fn().mockResolvedValue(new Response("nope", { status: 404 })),
     );
     await expect(fetchDataset("books")).rejects.toThrow(
-      'No fixture named "books" was found (looked for fixtures/books.json).',
+      "The dataset \"books\" didn't load — nothing was served at fixtures/books.json. Check that the dataset is installed there, then reload the page.",
     );
   });
 });

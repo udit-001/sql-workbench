@@ -15,7 +15,7 @@ import { buildImportScript, parseCsv } from "./bench-kit/csv";
 import { deleteImportedTable, listImportedTables, saveImportedTable, type ImportedTable } from "./bench-kit/csv-store";
 import { eventsToMarkdown } from "./bench-kit/export-markdown";
 import { formatCount } from "./bench-kit/format";
-import { fetchDataset } from "./bench-kit/fixture";
+import { fetchDataset, FixtureError } from "./bench-kit/fixture";
 import { highlightSql } from "./bench-kit/highlight";
 import type { Outcome } from "./bench-kit/engine";
 import { openJournal } from "./bench-kit/journal-idb";
@@ -630,7 +630,14 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
   } catch (err) {
     // Malformed/missing fixtures fail loud: console + visible panel.
     console.error("[sql-workbench]", err);
-    ui.showBootError((err as Error)?.message ?? String(err));
+    if (err instanceof FixtureError) {
+      // The message already carries the fix — render verbatim.
+      ui.showBootError(err.message);
+    } else {
+      ui.showBootError(
+        `Setup failed: ${(err as Error)?.message ?? String(err)} — ask your teacher to check the setup.`,
+      );
+    }
   }
   })();
 
