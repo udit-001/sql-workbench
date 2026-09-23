@@ -88,18 +88,42 @@ export function parseFixture(raw: unknown, requestedId: string): Fixture {
     : { id, kind: "sqlite-dataset", title: f.title.trim(), description, sql };
 }
 
-/** Fetch + parse `fixtures/<id>.json` relative to the deployed app root. */
-export async function fetchFixture(id: string): Promise<Fixture> {
+/** Fetch + parse a dataset by reference. A bare slug fetches
+ *  `fixtures/<id>.json` relative to the deployed app root (Pages demo,
+ *  standalone); a root-relative path or absolute URL is fetched verbatim —
+ *  the host owns storage and serving (pharos keeps datasets in its
+ *  workspace API), and the bench only needs the bytes + the shape contract.
+ *  The stem id comes from the reference itself, so the id==stem invariant
+ *  and the journal's dataset id hold across both forms. */
+export interface DatasetRef {
+  /** Fetch URL, verbatim for host-owned locations. */
+  url: string;
+  /** Stem id: the slug, or the host path's last segment minus .json. */
+  id: string;
+}
+
+export function resolveDatasetRef(ref: string): DatasetRef {
+  const clean = ref.split(/[?#]/, 1)[0] ?? ref;
+  if (!SLUG.test(clean)) {
+    const segments = clean.split("/").filter(Boolean);
+    const last = segments[segments.length - 1] ?? "";
+    return { url: ref, id: last.replace(/\.json$/, "") };
+  }
+  return { url: `fixtures/${encodeURIComponent(clean)}.json`, id: clean };
+}
+
+export async function fetchDataset(ref: string): Promise<Fixture> {
+  const { url, id } = resolveDatasetRef(ref);
   let response: Response;
   try {
-    response = await fetch(`fixtures/${encodeURIComponent(id)}.json`);
+    response = await fetch(url);
   } catch (err) {
     throw new FixtureError(
-      `Could not fetch fixture "${id}": ${(err as Error)?.message ?? String(err)}`,
+      `Could not fetch fixture "${id}" from ${url}: ${(err as Error)?.message ?? String(err)}`,
     );
   }
   if (response.status === 404) {
-    throw new FixtureError(`No fixture named "${id}" was found (looked for fixtures/${id}.json).`);
+    throw new FixtureError(`No fixture named "${id}" was found (looked for ${url}).`);
   }
   if (!response.ok) {
     throw new FixtureError(`Fetching fixture "${id}" failed: HTTP ${response.status}.`);

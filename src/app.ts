@@ -15,7 +15,7 @@ import { buildImportScript, parseCsv } from "./bench-kit/csv";
 import { deleteImportedTable, listImportedTables, saveImportedTable, type ImportedTable } from "./bench-kit/csv-store";
 import { eventsToMarkdown } from "./bench-kit/export-markdown";
 import { formatCount } from "./bench-kit/format";
-import { fetchFixture } from "./bench-kit/fixture";
+import { fetchDataset } from "./bench-kit/fixture";
 import { highlightSql } from "./bench-kit/highlight";
 import type { Outcome } from "./bench-kit/engine";
 import { openJournal } from "./bench-kit/journal-idb";
@@ -144,7 +144,10 @@ export interface MountOptions {
   /** Storage namespace: two benches on one page get separate journals
       and imported tables. Defaults to the standalone namespace. */
   namespace?: string;
-  /** Dataset id to load instead of the built-in demo dataset. */
+  /** Dataset reference to load instead of the built-in demo dataset: a bare
+   *  slug resolves to `fixtures/<id>.json` relative to the app root, while a
+   *  root-relative path or absolute URL is fetched verbatim — the host owns
+   *  storage and serving (pharos: its workspace datasets API). */
   dataset?: string;
   /** Boot-time editor prefill ("starter query"). Wins over the dataset-
       derived and demo defaults; set once at connect — post-connect control
@@ -595,8 +598,11 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
     let starterQuery: string | null = opts.sql ?? null;
 
     if (opts.dataset) {
-      const fixture = await fetchFixture(opts.dataset); // throws plain-language FixtureError
-      await loadDataset(opts.dataset, fixture.title, [fixture.sql]);
+      const fixture = await fetchDataset(opts.dataset); // throws plain-language FixtureError
+      // The journal's dataset id is the stem from the loaded file — for a
+      // host-owned URL reference the attribute value is a location, not an
+      // id, and journaling a URL would make history unreadable.
+      await loadDataset(fixture.id, fixture.title, [fixture.sql]);
       starterQuery = null; // filled from the loaded schema below
     } else {
       await engine.load([]);

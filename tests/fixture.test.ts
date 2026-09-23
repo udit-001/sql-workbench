@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { FixtureError, parseFixture } from "../src/bench-kit/fixture";
+import { describe, expect, it, vi, afterEach } from "vitest";
+import { FixtureError, parseFixture, resolveDatasetRef, fetchDataset } from "../src/bench-kit/fixture";
 
 const VALID = {
   id: "ecommerce",
@@ -71,5 +71,56 @@ describe("parseFixture", () => {
   it("rejects base64-encoded seeds — sqlite-dataset seeds must stay readable", () => {
     const encoded = { ...VALID, encoding: "base64" };
     expect(() => parse(encoded)).toThrow(/base64.*readable|readable.*base64/i);
+  });
+});
+
+describe("dataset references", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("resolves a bare slug to the fixtures-relative URL", () => {
+    expect(resolveDatasetRef("books")).toEqual({
+      url: "fixtures/books.json",
+      id: "books",
+    });
+  });
+
+  it("resolves a host-owned path to the verbatim URL, stem from the last segment", () => {
+    expect(resolveDatasetRef("/api/workspaces/name/sql-basics/datasets/books")).toEqual({
+      url: "/api/workspaces/name/sql-basics/datasets/books",
+      id: "books",
+    });
+    expect(
+      resolveDatasetRef("https://example.com/datasets/books.json?v=abc"),
+    ).toEqual({ url: "https://example.com/datasets/books.json?v=abc", id: "books" });
+  });
+
+  it("fetches a host-owned location verbatim and parses with the derived stem", async () => {
+    const spy = vi
+      .fn()
+      .mockResolvedValue(new Response(JSON.stringify(VALID), { status: 200 }));
+    vi.stubGlobal("fetch", spy);
+    const fixture = await fetchDataset("/datasets/ecommerce");
+    expect(spy).toHaveBeenCalledWith("/datasets/ecommerce");
+    expect(fixture.id).toBe("ecommerce");
+  });
+
+  it("reports the looked-at URL on a host 404", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(new Response("nope", { status: 404 })),
+    );
+    await expect(fetchDataset("/datasets/books")).rejects.toThrow(
+      'No fixture named "books" was found (looked for /datasets/books).',
+    );
+  });
+
+  it("keeps the fixture-relative 404 wording for bare slugs", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(new Response("nope", { status: 404 })),
+    );
+    await expect(fetchDataset("books")).rejects.toThrow(
+      'No fixture named "books" was found (looked for fixtures/books.json).',
+    );
   });
 });
