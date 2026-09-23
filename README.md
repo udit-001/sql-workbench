@@ -43,10 +43,10 @@ One script, one element. ~1.5 MB (614 KB gzipped), zero side requests — the SQ
 
 A fixture is a JSON file that seeds the bench with tables and data. Create one at `fixtures/<id>.json`, load it with `dataset="<id>"`.
 
-**Dataset references** — the `dataset` attribute accepts two forms, resolved by one rule (bare slug = fixture-relative, anything else = verbatim):
+**Dataset references** — `dataset` takes a bare slug or a location:
 
-- `dataset="<slug>"` — fetches `fixtures/<id>.json` relative to the app root (the Pages demo / any self-contained deployment).
-- `dataset="/path/to/<id>"` or `dataset="https://…/<id>"` — fetched verbatim, for hosts that store datasets elsewhere (pharos serves workspace datasets at `/api/workspaces/name/{ws}/datasets/<id>`). The stem id comes from the location's last segment, so the id==stem invariant and the journal's dataset id hold for both forms.
+- `dataset="<slug>"` — loads `fixtures/<id>.json` relative to the app root (Pages demo, self-contained deploys).
+- `dataset="/path/to/<id>"` or `dataset="https://…"` — loads the JSON at that exact path or URL; for hosts that keep datasets in their own storage. The bench identifies the dataset by the location's last segment, and the fixture's `id` field must match it.
 
 **Schema** — the built-in `ecommerce` fixture:
 
