@@ -257,6 +257,8 @@
         <li><a href="#quick-start">Quick start</a></li>
         <li><a href="#card">Card mode</a></li>
         <li><a href="#problems">Graded problems</a></li>
+        <li><a href="#errors">Errors</a></li>
+        <li><a href="#csv">CSV import</a></li>
         <li><a href="#empty">Empty state</a></li>
         <li><a href="#theme">Theming</a></li>
         <li><a href="#data">Data isolation</a></li>
@@ -310,6 +312,21 @@
         Every graded attempt also journals a <code>step</code> event — <code>title</code>,
         <code>concept</code>, <code>outcome</code> — so a host can see what was practiced, and who
         ran it (<code>actor: "learner" | "agent"</code>).
+      </p>
+
+      <h2 id="errors">Mistakes become explanations</h2>
+      <p class="desc">
+        SQL errors arrive in the engine's own words — never paraphrased — with a plain-language
+        explanation layered on top, and did-you-mean suggestions when the loaded schema can offer
+        one. The verbatim message is what you learn from; the hint is what you read first.
+      </p>
+      <div class="demo-frame"><sql-workbench id="error-demo" namespace="docs-error" mode="card" dataset="ecommerce" sql="SELECT regon FROM customers;"></sql-workbench></div>
+
+      <h2 id="csv">Bring your own data</h2>
+      <p class="desc">
+        Drag a CSV onto the bench (or use the Import button): pick a table name, confirm the
+        delimiter and header row, and query it like any other table. Imports persist per
+        <code>namespace</code> and show up in the schema panel and the diagram.
       </p>
 
       <h2 id="theme">It matches your app, not the other way round</h2>
@@ -392,7 +409,9 @@ sql-workbench::part(run-button) { border-radius: 999px; }</code></pre>
       <p class="desc">
         Hosts can override the empty state via <code>slot="empty"</code> or react to
         <code>state-change</code> events. <a href="standalone.html">Open standalone</a> —
-        bookmark it for quick SQL practice.
+        bookmark it for quick SQL practice. Seed the bench with your own tables using a
+        <a href="https://github.com/udit-001/sql-workbench#fixtures">fixture</a> — a JSON file
+        with the CREATE/INSERT script that runs on load and reset.
       </p>
 <pre data-copy><code>&lt;sql-workbench namespace="my-app"&gt;&lt;/sql-workbench&gt;
 
@@ -409,7 +428,7 @@ sql-workbench::part(run-button) { border-radius: 999px; }</code></pre>
         read the whole journal on demand, or export it as Markdown:
       </p>
 <pre data-copy><code>bench.addEventListener("workbench-event", (e) =&gt; {
-  // e.detail: { type: "query" | "csv-import" | "dataset-reset" | "csv-import-removed", sql, ok, rows, ms, error … }
+  // e.detail: { type: "query" | "step" | "dataset-reset" | "csv-import" | "csv-import-removed", sql, ok, rows, ms, error … }
 });
 
 const events = await bench.events();      // newest first, same shapes
