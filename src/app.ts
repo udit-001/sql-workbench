@@ -206,6 +206,14 @@ export interface WorkbenchHandle {
   runGraded(sql: string, runOpts?: WorkbenchRunOptions): Promise<{ outcome: Outcome; verdict?: StepVerdict }>;
   /** Restore the current dataset's seed data. */
   reset(): Promise<void>;
+  /** Swap to a different dataset without a page reload: fetch by fixture
+      slug (or a host-owned URL ref, as `dataset` accepts), re-seed, refresh
+      the schema, and reset the editor to a starter query over the new first
+      table. The problem slot is cleared — a graded step only means something
+      against the schema it was written for. Resolves to the fixture id that
+      ended up loaded; rejects with `FixtureError` (plain-language message) if
+      the ref does not resolve, leaving the current dataset untouched. */
+  setDataset(ref: string): Promise<string>;
   /** The whole session journal as Markdown. */
   exportMarkdown(): Promise<string>;
   /** All journaled events, newest first — same shapes the
@@ -429,6 +437,41 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
       editor.value = opts.starterQuery;
       refreshHighlight();
     }
+  }
+
+  /** Swap the loaded dataset. Fetch first, mutate after: an unresolvable ref
+      is the common failure and it must leave the current dataset standing.
+      Once the fetch lands, the rest is the same sequence as a reset, so a
+      switch and a reset converge on identical state. */
+  async function setDataset(ref: string): Promise<string> {
+    const fixture = await fetchDataset(ref);
+    try {
+      await loadDataset(fixture.id, fixture.title, [fixture.sql]);
+    } catch (err) {
+      // A dead engine is unrecoverable mid-session; a bad seed is a data
+      // problem. Split them so the panel only takes over for the first.
+      console.error("[sql-workbench] setDataset failed", err);
+      if (engine.dead || err instanceof WorkerRpcError) {
+        ui.showBootError("The database engine failed — reload the page to restart it.");
+      } else {
+        ui.setStatus(`Could not load ${fixture.title} — still on the previous dataset`);
+      }
+      throw err;
+    }
+    // Starter query over the new first table, matching the boot default.
+    const tables = await loadSchema(engine);
+    editor.value = tables[0] ? `SELECT *\nFROM ${tables[0].name}\nLIMIT 10;` : "";
+    refreshHighlight();
+    bench.markSeeded();
+    if (problem) applyProblem(null);
+    await recordEvent({
+      id: crypto.randomUUID(),
+      type: "dataset-reset",
+      ts: Date.now(),
+      fixture: fixture.id,
+    });
+    ui.setStatus(`Loaded ${fixture.title}`);
+    return fixture.id;
   }
 
   /** Journal an event, then bring the History tab back in sync. */
@@ -1001,6 +1044,7 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
       };
     },
     reset: () => resetDataset(),
+    setDataset,
     exportMarkdown,
     async events() {
       const journal = await journalPromise;

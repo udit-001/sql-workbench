@@ -48,6 +48,11 @@
         padding: 8px 16px;
         border-bottom: 1px solid var(--page-border);
         flex: none;
+        /* The dataset picker is the widest thing in here, so the bar has to
+           be allowed to break onto two lines rather than overflow a phone.
+           The header is flex:none, so a taller bar just shrinks the bench. */
+        flex-wrap: wrap;
+        row-gap: 6px;
       }
       header .name { font-weight: 600; }
       header .spacer { flex: 1; }
@@ -57,6 +62,25 @@
         text-decoration: none;
       }
       header a:hover { text-decoration: underline; }
+      header select#dataset-picker {
+        font: inherit;
+        font-size: 13px;
+        color: var(--page-ink);
+        background: transparent;
+        border: 1px solid var(--page-border);
+        border-radius: 6px;
+        padding: 3px 6px;
+        cursor: pointer;
+        /* min-width:0 lets the control shrink inside the flex line; without
+           it a select refuses to go below its widest option. */
+        min-width: 0;
+        max-width: 100%;
+      }
+      header select#dataset-picker:hover { border-color: var(--page-accent); }
+      header select#dataset-picker:focus-visible {
+        outline: 2px solid var(--page-accent);
+        outline-offset: 1px;
+      }
       sql-workbench {
         flex: 1;
         display: block;
@@ -67,6 +91,7 @@
   <body>
     <header>
       <span class="name">sql-workbench</span>
+      <select id="dataset-picker" aria-label="Load a sample dataset"></select>
       <span class="spacer"></span>
       <a href="index.html">Docs</a>
       <a href="https://github.com/udit-001/sql-workbench">GitHub</a>

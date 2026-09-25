@@ -60,6 +60,21 @@ button {
   cursor: pointer;
   transition: transform 100ms ease-out; /* release snaps back quickly */
 }
+/* Sizing contract for hosts that size the element as a flex/grid item (the
+   standalone page gives it flex:1 inside a 100vh column). The automatic
+   minimum size of a flex item is min-height:auto, which floors the host at
+   its *content* height — so a schema list of 11 tables grew the whole bench
+   to ~2000px and pushed the page into scrolling, instead of scrolling the
+   panel that declares overflow-y:auto. min-height:0 removes that floor so
+   the host can shrink to the line it is given; .bench's height:100% then
+   hands that bound down to .shell, and .schema stretches to it and scrolls.
+
+   This only ever *permits* shrinking — it imposes no height. A host that
+   sizes the element in normal flow is unaffected, and outer-document rules
+   outrank :host, so a page that sets its own min-height keeps it. */
+:host {
+  min-height: 0;
+}
 /* Motion tokens (matches learn-tool's input.css palette) — three curves,
    one per job: --ease-out for entrances/feedback, --ease-in-out for two-way
    moves, --ease-drawer for height reveals. These sit on :host so hosts can

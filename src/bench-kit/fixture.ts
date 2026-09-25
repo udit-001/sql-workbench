@@ -104,6 +104,17 @@ export interface DatasetRef {
   id: string;
 }
 
+/** True when a reference is the bare-slug form. The ONLY shape a public
+ *  page may accept from a URL: it resolves to this origin's own
+ *  `fixtures/<id>.json`. Host-owned locations (absolute URL, root-relative
+ *  path) stay the embedding host's business — they arrive as an authored
+ *  attribute, never as anonymous query-string input. A host-owned ref that
+ *  is itself a slug is unaffected, so the check is safe to apply at any
+ *  URL-reading surface. */
+export function isDatasetSlug(ref: string): boolean {
+  return SLUG.test(ref);
+}
+
 export function resolveDatasetRef(ref: string): DatasetRef {
   const clean = ref.split(/[?#]/, 1)[0] ?? ref;
   if (!SLUG.test(clean)) {

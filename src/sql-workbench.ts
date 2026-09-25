@@ -121,6 +121,13 @@ export class SqlWorkbench extends HTMLElement {
     return this.require().reset();
   }
 
+  /** Swap to another dataset by slug without a page reload. Rejects with
+      `FixtureError` if the ref does not resolve, leaving the current
+      dataset in place. */
+  setDataset(ref: string): Promise<string> {
+    return this.require().setDataset(ref);
+  }
+
   /** The whole session journal as Markdown. */
   exportMarkdown(): Promise<string> {
     return this.require().exportMarkdown();

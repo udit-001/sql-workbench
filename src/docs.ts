@@ -22,8 +22,10 @@ const hero = document.getElementById("hero");
 if (params.get("mode")) hero?.setAttribute("mode", params.get("mode")!);
 const sqlParam = params.get("sql");
 if (sqlParam && hero) hero.setAttribute("sql", sqlParam);
-const fixtureParam = params.get("dataset") ?? params.get("fixture");
-if (fixtureParam && hero) hero.setAttribute("dataset", fixtureParam);
+// ?dataset= / ?fixture= are applied by ./dataset-param, which main.ts
+// imports before the custom element is defined — an attribute set from
+// here would arrive after mount() had already read it, and the param would
+// do nothing. See the module's banner for the ordering argument.
 
 /* Header ◐ button — page chrome over the bench's standalone theme
    contract (LEARN-224): resolve with the shared precedence, persist the

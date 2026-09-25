@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, afterEach } from "vitest";
-import { FixtureError, parseFixture, resolveDatasetRef, fetchDataset } from "../src/bench-kit/fixture";
+import { FixtureError, parseFixture, resolveDatasetRef, fetchDataset, isDatasetSlug } from "../src/bench-kit/fixture";
 
 const VALID = {
   id: "ecommerce",
@@ -122,5 +122,37 @@ describe("dataset references", () => {
     await expect(fetchDataset("books")).rejects.toThrow(
       "The dataset \"books\" didn't load — nothing was served at fixtures/books.json. Check that the dataset is installed there, then reload the page.",
     );
+  });
+});
+
+describe("isDatasetSlug — the allowlist a public page may apply to ?dataset=", () => {
+  it("accepts the bare-slug form", () => {
+    for (const ref of ["books", "ecommerce", "sql-101", "w3c2"]) {
+      expect(isDatasetSlug(ref)).toBe(true);
+    }
+  });
+
+  it("rejects every host-owned location shape", () => {
+    for (const ref of [
+      "https://evil.example/payload.json",
+      "//evil.example/payload.json",
+      "/api/lesson-html/ws/datasets/books.json",
+      "datasets/books.json",
+      "../secrets.json",
+      "Books",
+      "books?x=1",
+      "books/../etc",
+      "",
+    ]) {
+      expect(isDatasetSlug(ref)).toBe(false);
+    }
+  });
+
+  it("never lets a rejected ref reach the verbatim-fetch branch", () => {
+    // The guard and the resolver must agree: anything isDatasetSlug
+    // refuses is exactly what resolveDatasetRef would fetch as-is.
+    for (const ref of ["https://evil.example/payload.json", "/api/books.json"]) {
+      expect(resolveDatasetRef(ref).url).toBe(ref);
+    }
   });
 });
