@@ -88,10 +88,11 @@ export class SchemaPanel {
       }
 
       block.append(header, cols);
-      // Blocks render open — measure once the column rows are in the DOM
-      // so --cols-h matches real content height from the first paint.
-      this.measureCols(cols);
       this.container.append(block);
+      // Blocks render open — measure only after the block is attached to
+      // the document. A detached element has no layout, so scrollHeight
+      // reads 0 and the open state would collapse (the v0.6.1 bug).
+      this.measureCols(cols);
     }
   }
 
