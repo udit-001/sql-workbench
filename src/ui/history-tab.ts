@@ -49,15 +49,21 @@ export class HistoryTab {
 
     const dot = document.createElement("span");
     dot.className =
-      event.type === "query" ? (event.ok ? "dot ok" : "dot err") : "dot reset";
+      event.type === "query" ? (event.ok ? "dot ok" : "dot err")
+      : event.type === "step" ? (event.outcome === "pass" ? "dot ok" : "dot err")
+      : "dot reset";
     dot.title =
       event.type === "query"
         ? event.ok
           ? "successful run"
           : "failed run"
-        : event.type === "csv-import-removed"
-          ? "imported table removed"
-          : "dataset reset";
+        : event.type === "step"
+          ? event.outcome === "pass"
+            ? "problem solved"
+            : "problem missed"
+          : event.type === "csv-import-removed"
+            ? "imported table removed"
+            : "dataset reset";
     row.append(dot);
 
     const main = document.createElement("span");
@@ -66,6 +72,13 @@ export class HistoryTab {
       main.textContent = event.ok ? event.sql : `${event.sql} → ${event.error}`;
       if (!event.ok) main.classList.add("jr-failed");
       main.title = `${event.fixture} — ${event.sql}`;
+    } else if (event.type === "step") {
+      const label = event.title ?? "problem";
+      const concept = event.concept ? ` · ${event.concept}` : "";
+      main.textContent =
+        event.outcome === "pass"
+          ? `Solved ${label}${concept}`
+          : `Missed ${label}${concept} — see the run above`;
     } else if (event.type === "csv-import") {
       main.textContent = `Imported CSV ${event.name} (${formatCount(event.rows)} rows)`;
     } else if (event.type === "csv-import-removed") {

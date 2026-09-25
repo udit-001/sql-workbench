@@ -343,6 +343,45 @@ button:active {
   border-bottom: 1px solid var(--wb-border);
   flex: none;
 }
+/* problem slot (LEARN-236): prompt above the editor, verdict below.
+   Both are additive: hidden unless a problem is set; card mode keeps
+   them visible so embedded drills read prompt -> attempt -> verdict. */
+.problem {
+  padding: 8px 12px;
+  font-size: 0.82rem;
+  border-bottom: 1px solid var(--wb-border);
+  flex: none;
+}
+.verdict {
+  padding: 0 10px 8px;
+  flex: none;
+}
+.verdict-box {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 6px 10px;
+  border: 1px solid var(--wb-border);
+  border-radius: 8px;
+  font-size: 0.78rem;
+}
+.verdict-box.pass {
+  border-color: var(--wb-ok);
+}
+.verdict-box.pass > span:first-child {
+  color: var(--wb-ok);
+  font-weight: 600;
+}
+.verdict-box.miss {
+  border-color: var(--wb-err);
+}
+.verdict-box.miss > span:first-child {
+  color: var(--wb-err);
+  font-weight: 600;
+}
+.verdict-detail {
+  color: var(--wb-muted);
+}
 .run {
   background: var(--wb-accent);
   color: #fff;

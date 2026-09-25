@@ -12,7 +12,7 @@
 
 ```html
 <script type="module"
-        src="https://cdn.jsdelivr.net/gh/udit-001/sql-workbench@v0.3/dist/sql-workbench.js"></script>
+        src="https://cdn.jsdelivr.net/gh/udit-001/sql-workbench@v0.7/dist/sql-workbench.js"></script>
 
 <sql-workbench namespace="my-app" style="display:block;height:560px"></sql-workbench>
 ```
@@ -23,6 +23,7 @@ One script, one element. ~1.5 MB (614 KB gzipped), zero side requests — the SQ
 
 - **Run real SQL** — full SQLite via WebAssembly. Window functions, CTEs, joins.
 - **Learn from mistakes** — errors explained in plain language; mistyped columns get suggestions.
+- **Verify attempts** — pose problems with a `test`; every attempt gets a pass/miss verdict.
 - **See the schema** — sidebar lists tables and columns; diagram draws foreign-key relationships.
 - **Import CSVs** — drag a file, query it like any table. persisted across sessions.
 - **Keep a journal** — every run saved to history; export as Markdown when done.
@@ -37,7 +38,24 @@ One script, one element. ~1.5 MB (614 KB gzipped), zero side requests — the SQ
 | `namespace` | any name | private journal + imported tables |
 | `dataset` | fixture id | load a named dataset (see below) |
 | `sql` | SQL text | boot-time editor prefill |
+| `test` | JSON rows | graded problem slot; attempts are compared against these rows — order-insensitive unless the problem is about ordering |
+| `concept` | any tag | free grouping string, carried on journal events |
+| `label` | short title | problem title for journals and history |
 | `autofocus` | boolean | focus editor after boot; off by default |
+
+Child text is the problem prompt (plain, visible even without the script):
+
+```html
+<sql-workbench namespace="lesson-3" dataset="books" mode="card"
+               concept="left-join" label="Books nobody reviewed"
+               test='[["The Pragmatic Programmer"],["Database Internals"]]'>
+  Find every book that has no reviews.
+</sql-workbench>
+```
+
+Omit `sql` for a recall problem — the learner writes from memory and the
+same test grades the result. There is no problem list or progression UI
+in the component; hosts drive navigation via `setProblem()`:
 
 ## Fixtures
 
@@ -89,8 +107,23 @@ const md = await bench.exportMarkdown();           // session journal as Markdow
 const events = await bench.events();               // journal entries, newest first
 bench.setTheme("dark");
 
+// Problem slot: agent-driven navigation + graded runs
+bench.setProblem({ title: "Ratings per title", concept: "aggregate-null",
+                   prompt: "Average stars per title.", test: { rows: [["Database Internals", 4.5]] } });
+const { outcome, verdict } = await bench.runGraded("SELECT ...", { actor: "agent" });
+bench.loadedProblem;                               // the Problem or null
+
 bench.addEventListener("workbench-event", (e) => {
-  // e.detail: { type: "query" | "dataset-reset" | "csv-import" | "csv-import-removed", ... }
+  // e.detail: { type: "query" | "step" | "dataset-reset" | "csv-import" | "csv-import-removed", ... }
+});
+
+// Agent-driven navigation: swap the problem slot. Not journaled.
+bench.setProblem({
+  title: "Ratings per title",
+  concept: "aggregate-null",
+  prompt: "Average stars per title. Include the book with no reviews.",
+  sql: "",               // omit/empty = write from memory
+  test: { rows: [["Database Internals", 4.5]] },
 });
 ```
 

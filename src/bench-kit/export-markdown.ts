@@ -37,6 +37,11 @@ export function eventsToMarkdown(events: WorkbenchEvent[], exportedAt = Date.now
         lines.push(`- imported CSV **${event.name}** (${formatCount(event.rows)} rows)`, "");
       } else if (event.type === "csv-import-removed") {
         lines.push(`- removed imported table **${event.name}**`, "");
+      } else if (event.type === "step") {
+        const label = event.title ?? "problem";
+        const concept = event.concept ? ` (${event.concept})` : "";
+        const verb = event.outcome === "pass" ? "solved" : "missed";
+        lines.push(`- ${verb} **${label}**${concept}`, "");
       } else {
         lines.push(`- reset sample data **${event.fixture}**`, "");
       }

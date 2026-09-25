@@ -18,8 +18,10 @@ import { formatCount } from "./bench-kit/format";
 import { fetchDataset, FixtureError } from "./bench-kit/fixture";
 import { highlightSql } from "./bench-kit/highlight";
 import type { Outcome } from "./bench-kit/engine";
+import type { StepVerdict } from "./bench-kit/problem";
 import { openJournal } from "./bench-kit/journal-idb";
 import type { WorkbenchEvent } from "./bench-kit/journal";
+import { gradeProblem, parseProblem, type Problem } from "./bench-kit/problem";
 import { layoutTables, loadRelations, loadSchema } from "./bench-kit/schema";
 import { createThemeController } from "./bench-kit/theme-controller";
 import type { Theme } from "./bench-kit/theme";
@@ -66,6 +68,8 @@ export const BENCH_TEMPLATE = `
       <span class="kbd-hint"><kbd id="modkey">Ctrl</kbd>+<kbd>Enter</kbd> to run</span>
     </div>
 
+    <div class="problem" id="problem-prompt" hidden aria-live="polite"></div>
+
     <div class="editor-wrap" id="editor-wrap">
       <pre class="highlight-layer" id="highlight-layer" aria-hidden="true"><code class="highlight-code" id="highlight-code"></code></pre>
       <textarea
@@ -76,6 +80,8 @@ export const BENCH_TEMPLATE = `
         placeholder="Type SQL, then press Ctrl+Enter…"
       ></textarea>
     </div>
+
+    <div class="verdict" id="verdict" hidden aria-live="polite"></div>
 
     <div class="tabs" role="tablist">
       <button class="tab on" id="tab-results" role="tab" aria-selected="true">Results</button>
@@ -154,6 +160,17 @@ export interface MountOptions {
       is run(). Prefilling is not an action: nothing is journaled, and an
       invalid query surfaces through the learner's own run. */
   sql?: string;
+  /** Problem slot (LEARN-236): graded practice without any LeetCode
+      chrome — one element is one problem; navigation belongs to the
+      host/agent via the handle's setProblem(). `test` is JSON rows the
+      learner's attempt is compared against; an unparsable test is a boot
+      error naming the attribute. `prompt` (element child text) shows
+      above the editor; `title` names journal events; `concept` is a
+      free grouping string the host defines. */
+  prompt?: string;
+  title?: string;
+  concept?: string;
+  test?: string;
   /** Take keyboard focus after boot (mirrors the HTML autofocus
       attribute). Off by default: a bench embedded mid-page must not grab
       the host's keyboard — the host opts in when the bench is the task,
@@ -165,9 +182,28 @@ export interface MountOptions {
   onStateChange?: (state: { tableCount: number }) => void;
 }
 
+export interface WorkbenchRunOptions {
+  /** Attribution for the journal (LEARN-236). Default "learner";
+      "agent" marks author pre-flight / verify runs. */
+  actor?: "learner" | "agent";
+}
+
 export interface WorkbenchHandle {
-  /** Run SQL as if typed into the editor; journaled like any run. */
-  run(sql: string): Promise<Outcome | undefined>;
+  /** Run SQL as if typed into the editor; journaled like any run.
+      runOpts.actor attributes the run in the journal. */
+  run(sql: string, runOpts?: WorkbenchRunOptions): Promise<Outcome | undefined>;
+  /** Swap the problem slot (agent-driven navigation, LEARN-236): new
+      prompt, starter prefill, cleared verdict. Not journaled — like the
+      sql prefill, presenting a problem is not an attempt. Pass null to
+      return to the plain query runner. */
+  setProblem(problem: Problem | null): void;
+  /** The problem currently loaded on the slot, or null (LEARN-236).
+      The relay glue re-grades agent runs against it for PASS/FAIL. */
+  problem(): Problem | null;
+  /** Run and, when a problem is loaded, grade it in one call (LEARN-236):
+      journaled with the given actor, returns the outcome verbatim plus
+      the step verdict (undefined without a problem). */
+  runGraded(sql: string, runOpts?: WorkbenchRunOptions): Promise<{ outcome: Outcome; verdict?: StepVerdict }>;
   /** Restore the current dataset's seed data. */
   reset(): Promise<void>;
   /** The whole session journal as Markdown. */
@@ -237,8 +273,46 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
   /* Live schema names for did-you-mean suggestions on SQL errors. */
   let schemaContext: { tables: string[]; columns: string[] } = { tables: [], columns: [] };
 
-  const ui = new DomUi($("run-btn"), $("results"), $("statusbar"), () => schemaContext);
+  const ui = new DomUi($("run-btn"), $("results"), $("statusbar"), $("verdict"), () => schemaContext);
   const bench = new Bench(engine, ui);
+
+  /* --- Problem slot (LEARN-236) ---------------------------------------- */
+  /* Parse once at mount: an unparsable `test` is a boot error that names
+     the attribute — never silent breakage, same rule as the element-id
+     contract. A null problem is today's plain query runner. */
+  let problem: Problem | null = null;
+  if (opts.test) {
+    try {
+      problem = parseProblem({
+        prompt: opts.prompt,
+        title: opts.title,
+        concept: opts.concept,
+        test: opts.test,
+        starter: opts.sql,
+      });
+    } catch (err) {
+      console.error("[sql-workbench]", err);
+      ui.showBootError((err as Error).message);
+    }
+  }
+
+  /** Swap the problem slot: prompt element, starter prefill, fresh
+      verdict. Presenting a problem is not an attempt — nothing is
+      journaled (same rule as the sql prefill). */
+  function applyProblem(next: Problem | null): void {
+    problem = next;
+    bench.setProblem(next);
+    const promptEl = $("problem-prompt");
+    promptEl.textContent = next?.prompt ?? "";
+    promptEl.hidden = !next?.prompt;
+    editor.value = next?.starter ?? "";
+    refreshHighlight();
+  }
+  if (problem) {
+    const promptEl = $("problem-prompt");
+    promptEl.textContent = problem.prompt ?? "";
+    promptEl.hidden = !problem.prompt;
+  }
   const editor = $<HTMLTextAreaElement>("editor");
   const resetButton = $<HTMLButtonElement>("reset-btn");
   const runButton = $<HTMLButtonElement>("run-btn");
@@ -365,20 +439,34 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
     opts.onEvent?.(event);
   }
 
-  async function recordQuery(sql: string, outcome: Outcome): Promise<void> {
+  async function recordQuery(sql: string, outcome: Outcome, actor?: "learner" | "agent"): Promise<void> {
     const base = { id: crypto.randomUUID(), ts: Date.now(), fixture: currentDataset.id };
     await recordEvent(
       outcome.kind === "ok"
-        ? { ...base, type: "query", sql, ok: true, rows: outcome.rowCount, ms: outcome.ms }
-        : { ...base, type: "query", sql, ok: false, error: outcome.message },
+        ? { ...base, type: "query", sql, ok: true, rows: outcome.rowCount, ms: outcome.ms, ...(actor ? { actor } : {}) }
+        : { ...base, type: "query", sql, ok: false, error: outcome.message, ...(actor ? { actor } : {}) },
     );
+    // A graded slot journals the pedagogy alongside the attempt: which
+    // problem, what concept, what happened. The comparator is pure, so
+    // re-grading for the journal is deterministic and free.
+    if (problem) {
+      const { verdict } = gradeProblem(problem, outcome);
+      await recordEvent({
+        ...base,
+        type: "step",
+        ...(problem.title ? { title: problem.title } : {}),
+        ...(problem.concept ? { concept: problem.concept } : {}),
+        ...(actor ? { actor } : {}),
+        outcome: verdict.outcome,
+      });
+    }
   }
 
   /** Submit what's in the editor; blank is a no-op; journaled immediately.
       Infrastructural engine failures (crashed worker, stuck query) reject
       out of submit — one recovery attempt is made (fresh worker, re-seed,
       replay imports); if that fails too, the boot-error panel says so. */
-  async function run(sql: string): Promise<Outcome | undefined> {
+  async function run(sql: string, actor?: "learner" | "agent"): Promise<Outcome | undefined> {
     let outcome: Outcome | undefined;
     try {
       outcome = await bench.submit(sql);
@@ -396,7 +484,11 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
     }
     // Blank queries are a no-op; real runs land in the journal immediately.
     // Dirty tracking lives in Bench: submit() is its single writer.
-    if (outcome) await recordQuery(sql.trim(), outcome);
+    if (outcome) await recordQuery(sql.trim(), outcome, actor);
+    // Attribution stays in the statusbar (LEARN-236): the agent's runs
+    // are visible as agent work, calm and non-disruptive — same line
+    // the engine-restart copy uses. The results pane stays the truth.
+    if (actor === "agent") ui.setStatus("Agent run — see the result above");
     // A mutation attempt can change the schema (even a failed multi-
     // statement script may have applied its early statements) — keep the
     // panel, diagram, and did-you-mean context truthful without waiting
@@ -886,13 +978,27 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
   /* ── Handle ─────────────────────────────────────────────────────────── */
 
   return {
-    async run(sql: string) {
+    async run(sql, runOpts) {
       editor.value = sql;
       caret = null;
       refreshHighlight();
       // Same submit path as the editor: one journaling point, one
-      // infra-failure surface.
-      return run(sql);
+      // infra-failure surface. runOpts.actor attributes the run in the
+      // journal (LEARN-236): "agent" = author pre-flight / verify runs.
+      return run(sql, runOpts?.actor ?? "learner");
+    },
+    setProblem(next) {
+      applyProblem(next);
+    },
+    problem: () => problem,
+    async runGraded(sql, runOpts) {
+      const outcome = await run(sql, runOpts?.actor ?? "learner");
+      if (!outcome) throw new Error("blank query — nothing to run");
+      const loaded = problem;
+      return {
+        outcome,
+        ...(loaded ? { verdict: gradeProblem(loaded, outcome).verdict } : {}),
+      };
     },
     reset: () => resetDataset(),
     exportMarkdown,

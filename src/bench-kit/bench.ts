@@ -1,4 +1,6 @@
 import type { Engine, Outcome } from "./engine";
+import type { Problem, StepVerdict } from "./problem";
+import { gradeProblem } from "./problem";
 
 /**
  * DOM-free port the Bench orchestrator drives. The real implementation
@@ -9,6 +11,9 @@ export interface BenchUi {
   setRunning(running: boolean): void;
   /** Receives exactly one outcome per completed run. */
   showOutcome(outcome: Outcome): void;
+  /** Receives the problem verdict after a graded run (undefined when
+      no problem is set — the plain query runner). */
+  showVerdict?(verdict: StepVerdict | undefined): void;
 }
 
 /**
@@ -75,6 +80,22 @@ export class Bench {
 
   private dirty = false;
 
+  /** The problem the current slot grades, when one is set (LEARN-236).
+      The orchestrator knows nothing about lists, progression, or the
+      host: it grades whatever attempt is submitted against this test
+      and hands the verdict to the UI. Navigation is the caller's job. */
+  private problem: Problem | null = null;
+
+  setProblem(problem: Problem | null): void {
+    this.problem = problem;
+    // A swapped slot must not carry the previous problem's verdict.
+    this.ui.showVerdict?.(undefined);
+  }
+
+  get currentProblem(): Problem | null {
+    return this.problem;
+  }
+
   /**
    * Submit the current query. Blank queries are a no-op (returns
    * undefined). Unexpected engine failures (crashed worker etc.) reject —
@@ -92,6 +113,10 @@ export class Bench {
     try {
       const outcome = await this.engine.run(query);
       this.ui.showOutcome(outcome);
+      if (this.problem) {
+        const { verdict } = gradeProblem(this.problem, outcome);
+        this.ui.showVerdict?.(verdict);
+      }
       return outcome;
     } finally {
       this.ui.setRunning(false);

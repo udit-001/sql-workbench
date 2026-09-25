@@ -1,5 +1,6 @@
 import type { Outcome, QueryOutcome } from "../bench-kit/engine";
 import type { BenchUi } from "../bench-kit/bench";
+import type { StepVerdict } from "../bench-kit/problem";
 import { formatCount } from "../bench-kit/format";
 import { explainSqlError, type ErrorContext } from "../bench-kit/error-help";
 
@@ -13,17 +14,22 @@ export class DomUi implements BenchUi {
   private readonly runButton: HTMLButtonElement;
   private readonly results: HTMLElement;
   private readonly statusbar: HTMLElement;
+  /** Problem verdict surface (LEARN-236); null when the host renders
+      its own verdict (BenchUi.showVerdict is optional). */
+  private readonly verdict: HTMLElement | null;
 
   constructor(
     runButton: HTMLButtonElement,
     results: HTMLElement,
     statusbar: HTMLElement,
+    verdict?: HTMLElement,
     /** Live schema snapshot for did-you-mean suggestions on SQL errors. */
     private readonly errorContext?: () => ErrorContext,
   ) {
     this.runButton = runButton;
     this.results = results;
     this.statusbar = statusbar;
+    this.verdict = verdict ?? null;
   }
 
   setRunning(running: boolean): void {
@@ -46,6 +52,31 @@ export class DomUi implements BenchUi {
         ? describeOk(outcome)
         : "Query failed — see the message above",
     );
+  }
+
+  /** Problem verdict (LEARN-236): pass / miss with comparator detail.
+      undefined clears the box (a swapped slot starts fresh). Verbatim
+      SQL errors stay in the results pane — the verdict only grades. */
+  showVerdict(verdict: StepVerdict | undefined): void {
+    if (!this.verdict) return;
+    if (verdict === undefined) {
+      this.verdict.hidden = true;
+      this.verdict.replaceChildren();
+      return;
+    }
+    const box = document.createElement("div");
+    box.className = verdict.outcome === "pass" ? "verdict-box pass" : "verdict-box miss";
+    const mark = document.createElement("span");
+    mark.textContent = verdict.outcome === "pass" ? "\u2713 Passed" : "\u2717 Miss";
+    box.append(mark);
+    if (verdict.outcome === "miss" && verdict.detail) {
+      const detail = document.createElement("span");
+      detail.className = "verdict-detail";
+      detail.textContent = verdict.detail;
+      box.append(detail);
+    }
+    this.verdict.replaceChildren(box);
+    this.verdict.hidden = false;
   }
 
   /** Infrastructural messages that aren't tied to a query run. */

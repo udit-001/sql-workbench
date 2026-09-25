@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { Bench, mutatesData, type BenchUi } from "../src/bench-kit/bench";
 import { FakeEngine, errorOutcome, okOutcome } from "../src/bench-kit/fake-engine";
+import type { Problem, StepVerdict } from "../src/bench-kit/problem";
 
 function recordingUi(): { ui: BenchUi; events: string[]; outcomes: unknown[] } {
   const events: string[] = [];
@@ -113,5 +114,78 @@ describe("Bench dirty tracking", () => {
 
     await bench.submit("INSERT INTO t VALUES (1); bogus");
     expect(bench.dirtySinceSeed).toBe(true);
+  });
+});
+
+describe("Bench problem slot (LEARN-236)", () => {
+  function verdictRecordingUi() {
+    const rec = recordingUi();
+    const verdicts: (StepVerdict | undefined)[] = [];
+    rec.ui.showVerdict = (v) => verdicts.push(v);
+    return { ...rec, verdicts };
+  }
+
+  const problem: Problem = {
+    title: "Books nobody reviewed",
+    concept: "left-join",
+    test: { rows: [["The Pragmatic Programmer"]] },
+  };
+
+  it("grades a matching attempt as pass", async () => {
+    const engine = new FakeEngine(() =>
+      okOutcome({ columns: ["title"], rows: [["The Pragmatic Programmer"]] }));
+    const { ui, verdicts } = verdictRecordingUi();
+    const bench = new Bench(engine, ui);
+    bench.setProblem(problem);
+
+    await bench.submit("SELECT b.title FROM books b ...");
+    // setProblem fired an initial clear (undefined); the run graded pass.
+    expect(verdicts.filter((v) => v !== undefined)).toEqual([{ outcome: "pass" }]);
+    expect(bench.currentProblem).toBe(problem);
+  });
+
+  it("grades a wrong attempt as miss with the comparator's detail", async () => {
+    const engine = new FakeEngine(() => okOutcome({ columns: ["title"], rows: [["Wrong Book"]] }));
+    const { ui, verdicts } = verdictRecordingUi();
+    const bench = new Bench(engine, ui);
+    bench.setProblem(problem);
+
+    await bench.submit("SELECT 'Wrong Book'");
+    const graded = verdicts.filter((v) => v !== undefined);
+    expect(graded).toHaveLength(1);
+    const verdict = graded[0];
+    expect(verdict?.outcome).toBe("miss");
+    expect(verdict?.outcome === "miss" && verdict.detail).toContain("row 1 differs");
+  });
+
+  it("clears the verdict when a new problem is set — a swapped slot starts fresh", async () => {
+    const engine = new FakeEngine(() => okOutcome({ columns: ["title"], rows: [["Wrong Book"]] }));
+    const { ui, verdicts } = verdictRecordingUi();
+    const bench = new Bench(engine, ui);
+    bench.setProblem(problem);
+    await bench.submit("SELECT 'Wrong Book'");
+    expect(verdicts[verdicts.length - 1]?.outcome).toBe("miss");
+
+    bench.setProblem({ test: { rows: [] } });
+    expect(verdicts[verdicts.length - 1]).toBeUndefined();
+  });
+
+  it("does not grade when no problem is set — the plain query runner is untouched", async () => {
+    const engine = new FakeEngine(() => okOutcome({ columns: ["id"], rows: [[1]] }));
+    const { ui, verdicts } = verdictRecordingUi();
+    const bench = new Bench(engine, ui);
+
+    await bench.submit("SELECT 1");
+    expect(verdicts).toEqual([]);
+  });
+
+  it("grades an expected-error problem on the verbatim engine message", async () => {
+    const engine = new FakeEngine(() => errorOutcome("no such column: regon"));
+    const { ui, verdicts } = verdictRecordingUi();
+    const bench = new Bench(engine, ui);
+    bench.setProblem({ test: { rows: [], error: "no such column" } });
+
+    await bench.submit("SELECT regon");
+    expect(verdicts.filter((v) => v !== undefined)).toEqual([{ outcome: "pass" }]);
   });
 });

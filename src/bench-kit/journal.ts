@@ -11,6 +11,8 @@ export type QueryEvent = {
   ts: number;
   fixture: string;
   sql: string;
+  /** Who drove the run (LEARN-236): omitted on legacy events = learner. */
+  actor?: "learner" | "agent";
 } & (
   | { ok: true; rows: number; ms: number }
   | { ok: false; error: string }
@@ -39,7 +41,23 @@ export interface CsvImportRemovedEvent {
   name: string;
 }
 
-export type WorkbenchEvent = QueryEvent | CsvImportEvent | CsvImportRemovedEvent | DatasetResetEvent;
+/** One graded attempt on a problem slot (LEARN-236). The attempt's SQL
+ *  and any verbatim error live in the paired query event; the step event
+ *  carries the pedagogy: which problem, what concept, what happened. */
+export interface StepEvent {
+  id: string;
+  type: "step";
+  ts: number;
+  fixture: string;
+  /** Problem title, when the element declared one. */
+  title?: string;
+  concept?: string;
+  outcome: "pass" | "miss";
+  /** Who attempted (LEARN-236): agent = author pre-flight/verify runs. */
+  actor?: "learner" | "agent";
+}
+
+export type WorkbenchEvent = QueryEvent | CsvImportEvent | CsvImportRemovedEvent | DatasetResetEvent | StepEvent;
 
 export const JOURNAL_MAX_EVENTS = 2000;
 

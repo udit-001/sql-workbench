@@ -12,10 +12,11 @@
  * Every journaled event re-dispatches as a `workbench-event` CustomEvent
  * so hosts can react without reaching inside.
  */
-import { mount, type WorkbenchHandle } from "./app";
+import { mount, type WorkbenchHandle, type WorkbenchRunOptions } from "./app";
 import styles from "./styles.css?inline";
 import type { Theme } from "./bench-kit/theme";
 import type { WorkbenchEvent } from "./bench-kit/journal";
+import type { Problem, StepVerdict } from "./bench-kit/problem";
 
 export class SqlWorkbench extends HTMLElement {
   static observedAttributes = ["mode", "theme"];
@@ -37,6 +38,14 @@ export class SqlWorkbench extends HTMLElement {
     const ns = this.getAttribute("namespace") ?? this.getAttribute("db");
     const dataset = this.getAttribute("dataset") ?? this.getAttribute("fixture");
     const sql = this.getAttribute("sql");
+    // Problem slot (LEARN-236): child text is the prompt — module scripts
+    // are deferred, so the upgrade runs after the whole element's children
+    // are parsed and textContent is complete.
+    const prompt = this.textContent?.trim() || null;
+    const test = this.getAttribute("test");
+    const concept = this.getAttribute("concept");
+    // `title` is native (tooltip); the journal-facing problem title is `label`.
+    const title = this.getAttribute("label");
     // Boolean presence, like the HTML autofocus attribute it mirrors.
     const autofocus = this.hasAttribute("autofocus");
     // Mirror the resolved theme onto the element: :host([data-theme]) is
@@ -54,6 +63,10 @@ export class SqlWorkbench extends HTMLElement {
       ...(ns ? { namespace: ns } : {}),
       ...(dataset ? { dataset } : {}),
       ...(sql ? { sql } : {}),
+      ...(prompt ? { prompt } : {}),
+      ...(test ? { test } : {}),
+      ...(concept ? { concept } : {}),
+      ...(title ? { title } : {}),
       ...(autofocus ? { autofocus: true } : {}),
       onEvent: (event) => {
         this.dispatchEvent(new CustomEvent("workbench-event", { detail: event }));
@@ -82,8 +95,25 @@ export class SqlWorkbench extends HTMLElement {
   }
 
   /** Run SQL as if typed into the editor. */
-  run(sql: string): ReturnType<WorkbenchHandle["run"]> {
-    return this.require().run(sql);
+  run(sql: string, runOpts?: WorkbenchRunOptions): ReturnType<WorkbenchHandle["run"]> {
+    return this.require().run(sql, runOpts);
+  }
+
+  /** Swap the problem slot (agent-driven navigation, LEARN-236). */
+  setProblem(problem: Problem | null): void {
+    this.require().setProblem(problem);
+  }
+
+  /** The problem loaded on the slot, or null. */
+  get loadedProblem(): Problem | null {
+    return this.require().problem();
+  }
+
+  /** Run + grade in one call (agent exec channel, LEARN-236): the
+      outcome is verbatim; the verdict grades against the loaded problem
+      (undefined without one). */
+  async runGraded(sql: string, runOpts?: WorkbenchRunOptions): Promise<{ outcome: NonNullable<Awaited<ReturnType<WorkbenchHandle["run"]>>>; verdict?: StepVerdict }> {
+    return this.require().runGraded(sql, runOpts);
   }
 
   /** Restore the current dataset's seed data. */

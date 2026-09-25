@@ -6,7 +6,7 @@
     <title>sql-workbench — a SQL practice bench as a web component</title>
     <meta
       name="description"
-      content="A zero-install SQL practice bench: a full SQLite engine, schema browser, CSV import, and run journal in one script tag. Type SQL in the browser, practice against sample datasets, and export your runs."
+      content="A zero-install SQL practice bench: a full SQLite engine, schema browser, graded practice problems, and a run journal in one script tag. Type SQL in the browser, practice against sample datasets, and export your runs."
     />
     <link rel="canonical" href="https://udit-001.github.io/sql-workbench/" />
     <meta name="color-scheme" content="light dark" />
@@ -19,7 +19,7 @@
     <meta property="og:title" content="sql-workbench — a SQL practice bench as a web component" />
     <meta
       property="og:description"
-      content="A full SQLite engine, schema browser, CSV import, and run journal in one script tag. Zero install, runs entirely in the browser."
+      content="A full SQLite engine, schema browser, graded practice problems, and a run journal in one script tag. Zero install, runs entirely in the browser."
     />
     <meta property="og:url" content="https://udit-001.github.io/sql-workbench/" />
     <meta property="og:image" content="https://udit-001.github.io/sql-workbench/og-image.png" />
@@ -30,7 +30,7 @@
     <meta name="twitter:title" content="sql-workbench — a SQL practice bench as a web component" />
     <meta
       name="twitter:description"
-      content="A full SQLite engine, schema browser, CSV import, and run journal in one script tag. Zero install, runs entirely in the browser."
+      content="A full SQLite engine, schema browser, graded practice problems, and a run journal in one script tag. Zero install, runs entirely in the browser."
     />
     <meta name="twitter:image" content="https://udit-001.github.io/sql-workbench/og-image.png" />
     <link
@@ -256,6 +256,7 @@
         <li><a href="#try">Live demo</a></li>
         <li><a href="#quick-start">Quick start</a></li>
         <li><a href="#card">Card mode</a></li>
+        <li><a href="#problems">Graded problems</a></li>
         <li><a href="#empty">Empty state</a></li>
         <li><a href="#theme">Theming</a></li>
         <li><a href="#data">Data isolation</a></li>
@@ -275,7 +276,7 @@
       <p class="desc">One script, one element. The file is ~1.5 MB (614 KB gzipped) and makes
         zero side requests — the SQLite engine, worker and all, is inside it.</p>
 <pre data-copy><code>&lt;script type="module"
-        src="https://cdn.jsdelivr.net/gh/udit-001/sql-workbench@v0.3/dist/sql-workbench.js"&gt;&lt;/script&gt;
+        src="https://cdn.jsdelivr.net/gh/udit-001/sql-workbench@v0.7/dist/sql-workbench.js"&gt;&lt;/script&gt;
 
 &lt;sql-workbench namespace="my-app" style="display:block;height:560px"&gt;&lt;/sql-workbench&gt;</code></pre>
       <p class="desc">
@@ -291,6 +292,25 @@
         This one below is the same component, same script:
       </p>
       <div class="demo-frame"><sql-workbench id="card-demo" namespace="docs-card" mode="card" dataset="ecommerce" sql="SELECT region, COUNT(*) AS orders&#10;FROM orders o JOIN customers c ON c.id = o.customer_id&#10;GROUP BY region;"></sql-workbench></div>
+
+      <h2 id="problems">Graded problems: verify what learners write</h2>
+      <p class="desc">
+        Give an embed a <code>test</code> — JSON rows — and it becomes a graded problem: the child
+        text is the prompt, and every attempt gets a verdict. The learner is judged on their
+        <em>result</em>, not their query text — any correct query passes. Row order doesn't matter
+        unless the lesson is about ordering. This one is live — solve it:
+      </p>
+      <div class="demo-frame"><sql-workbench id="problem-demo" namespace="docs-problem" mode="card" dataset="ecommerce"
+        concept="group-by" label="Orders per region"
+        test='[["africa",2],["europe",4],["middle_east",1],["north_america",2],["south_asia",1]]'>Count the orders per customer region.</sql-workbench></div>
+      <p class="desc">
+        Omit <code>sql</code> for a recall problem — the learner writes from memory and the same
+        test grades the result. Navigation between problems stays out of the component: hosts
+        swap the slot with <code>setProblem()</code> (agent-driven teaching) or render more embeds.
+        Every graded attempt also journals a <code>step</code> event — <code>title</code>,
+        <code>concept</code>, <code>outcome</code> — so a host can see what was practiced, and who
+        ran it (<code>actor: "learner" | "agent"</code>).
+      </p>
 
       <h2 id="theme">It matches your app, not the other way round</h2>
       <p class="desc">
@@ -385,8 +405,8 @@ sql-workbench::part(run-button) { border-radius: 999px; }</code></pre>
 
       <h2 id="journal">Watch what learners run</h2>
       <p class="desc">
-        Every query, import, and reset is journaled. Get them live as DOM events, read the
-        whole journal on demand, or export it as Markdown:
+        Every query, import, reset, and graded attempt is journaled. Get them live as DOM events,
+        read the whole journal on demand, or export it as Markdown:
       </p>
 <pre data-copy><code>bench.addEventListener("workbench-event", (e) =&gt; {
   // e.detail: { type: "query" | "csv-import" | "dataset-reset" | "csv-import-removed", sql, ok, rows, ms, error … }
@@ -407,6 +427,9 @@ const md = await bench.exportMarkdown();  // paste-ready practice log</code></pr
             <tr><td><code>namespace</code></td><td>private journal + imported tables</td></tr>
             <tr><td><code>dataset</code></td><td>named dataset instead of the built-in demo</td></tr>
             <tr><td><code>sql</code></td><td>boot-time editor prefill</td></tr>
+            <tr><td><code>test</code></td><td>JSON rows — grades every attempt (pass/miss verdict)</td></tr>
+            <tr><td><code>concept</code></td><td>free grouping tag, carried on journal events</td></tr>
+            <tr><td><code>label</code></td><td>problem title for journals and history</td></tr>
           </table>
         </div>
         <div>
@@ -414,6 +437,9 @@ const md = await bench.exportMarkdown();  // paste-ready practice log</code></pr
           <table>
             <tr><th>Member</th><th>What it does</th></tr>
             <tr><td><code>run(sql)</code></td><td>fills the editor, executes, journals</td></tr>
+            <tr><td><code>setProblem(p)</code></td><td>swap the problem slot (agent navigation)</td></tr>
+            <tr><td><code>runGraded(sql, opts)</code></td><td>run + verdict in one call, attributed</td></tr>
+            <tr><td><code>loadedProblem</code></td><td>the loaded problem, or null</td></tr>
             <tr><td><code>reset()</code></td><td>restores the dataset's seed data</td></tr>
             <tr><td><code>events()</code></td><td>journal entries, newest first</td></tr>
             <tr><td><code>exportMarkdown()</code></td><td>journal as a Markdown practice log</td></tr>

@@ -66,3 +66,24 @@ describe("dedupeAndTrim", () => {
     expect(next.map((e) => e.id)).toEqual(["b", "c", "d"]);
   });
 });
+
+describe("StepEvent (LEARN-236)", () => {
+  it("flows through MemoryJournal and dedupeAndTrim like any event", async () => {
+    const journal = new MemoryJournal();
+    const step = {
+      id: "s1",
+      type: "step" as const,
+      ts: 5_000,
+      fixture: "books",
+      title: "Books nobody reviewed",
+      concept: "left-join",
+      outcome: "miss" as const,
+    };
+    await journal.append(step);
+    await journal.append(step); // retry — deduped by id
+
+    const listed = await journal.list();
+    expect(listed).toHaveLength(1);
+    expect(listed[0]).toMatchObject({ type: "step", outcome: "miss", concept: "left-join" });
+  });
+});
