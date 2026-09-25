@@ -36,21 +36,33 @@ jobs:
         # without this commit every tag URL serves the previous release's
         # bundle. Runs after `gh release create` so the Pages build that
         # this push triggers downloads THIS release.
+        # Tolerates a clean tree: if the tagger already committed the
+        # rebuilt dist and version bump (the recommended flow), there is
+        # nothing to commit — the tag already sits on the right commit.
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           npm version "$VERSION" --no-git-tag-version --allow-same-version
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add dist/sql-workbench.js package.json package-lock.json
-          git commit -m "chore(release): $GITHUB_REF_NAME — rebuilt dist"
-          git push origin HEAD:main
+          if git diff --cached --quiet; then
+            echo "Tree already contains the rebuilt artifact — tag is current."
+          else
+            git commit -m "chore(release): $GITHUB_REF_NAME — rebuilt dist"
+            git push origin HEAD:main
+          fi
       - name: Point the tag at the release commit
         # The tag was pushed before the dist commit existed; jsDelivr's
         # @version URLs resolve through the tag, so it must sit on the
-        # commit that contains the rebuilt artifact.
+        # commit that contains the rebuilt artifact. Skip the move when
+        # the tag already sits on a commit containing the artifact.
         run: |
-          git tag -f "$GITHUB_REF_NAME" HEAD
-          git push --force origin "refs/tags/$GITHUB_REF_NAME"
+          if git diff --quiet "$GITHUB_REF_NAME" HEAD -- dist/sql-workbench.js package.json; then
+            echo "Tag already points at the artifact commit."
+          else
+            git tag -f "$GITHUB_REF_NAME" HEAD
+            git push --force origin "refs/tags/$GITHUB_REF_NAME"
+          fi
       - name: Purge jsDelivr cache for the tag URL
         # Versioned URLs are cached hard; the move above needs a purge to
         # take effect immediately. Non-fatal — cache expires on its own.
