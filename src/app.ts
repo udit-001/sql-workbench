@@ -698,7 +698,11 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
     errorBox: $("import-error"),
   });
 
-  async function executeImport(filename: string, selection: ImportSelection): Promise<void> {
+  async function executeImport(
+    filename: string,
+    selection: ImportSelection,
+    keepOnSchema = false,
+  ): Promise<void> {
     // Importing replaces a previous version of YOUR table, but never a
     // sample/fixture one — that would silently destroy seeded practice data.
     const existing = await loadSchema(engine);
@@ -751,10 +755,46 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
       refreshHighlight();
     }
     ui.setStatus(
-      `Imported ${formatCount(selection.rows)} rows into ${selection.tableName}`,
+      `Imported ${formatCount(selection.rows)} rows into ${selection.tableName}` +
+        (keepOnSchema ? ` — ${importQueue.length} more file${importQueue.length === 1 ? "" : "s"} queued` : ""),
     );
-    selectView("results", host.querySelector('[data-seg="results"]') ?? host);
+    // Single imports land on Results (see the query prefill above); queue
+    // imports stay on Schema so the next confirm-modal opens in context.
+    if (keepOnSchema) {
+      selectView("schema", host.querySelector('[data-seg="schema"]') ?? host);
+    } else {
+      selectView("results", host.querySelector('[data-seg="results"]') ?? host);
+    }
     importModal.close();
+  }
+
+  /** Import a queue of CSVs, one confirm-modal per file, back to back.
+   *  While a queue is active, imports land on the Schema view instead of
+   *  jumping to Results — the user's next move is "next file", and each
+   *  table's arrival in the sidebar is visible confirmation. */
+  let importQueue: File[] = [];
+  function importFiles(files: File[]): void {
+    importQueue = files;
+    void importNext();
+  }
+  async function importNext(): Promise<void> {
+    const file = importQueue.shift();
+    if (!file) return;
+    try {
+      if (file.size > MAX_CSV_BYTES) {
+        ui.setStatus(`Skipped ${file.name} — the bench caps imports at ${MAX_CSV_MB} MB`);
+        void importNext();
+        return;
+      }
+      importModal.onExecute(async (selection) => {
+        await executeImport(file.name, selection, importQueue.length > 0);
+        void importNext();
+      });
+      await importModal.openFor(file.name, await file.text());
+    } catch (err) {
+      console.error("[sql-workbench] could not read CSV file", err);
+      ui.setStatus(`Could not read ${file.name} — see console`);
+    }
   }
 
   async function openCsvFile(file: File): Promise<void> {
@@ -775,9 +815,10 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
     const picker = document.createElement("input");
     picker.type = "file";
     picker.accept = ".csv,text/csv,text/plain";
+    picker.multiple = true;
     picker.addEventListener("change", () => {
-      const file = picker.files?.[0];
-      if (file) void openCsvFile(file);
+      const files = [...(picker.files ?? [])];
+      if (files.length > 0) importFiles(files);
     });
     picker.click();
   });
@@ -802,8 +843,8 @@ export function mount(host: HTMLElement, opts: MountOptions = {}): WorkbenchHand
     event.preventDefault();
     dragDepth = 0;
     host.classList.remove("dragging");
-    const file = event.dataTransfer?.files?.[0];
-    if (file) void openCsvFile(file);
+    const files = [...(event.dataTransfer?.files ?? [])];
+    if (files.length > 0) importFiles(files);
   }
   host.addEventListener("dragenter", dragEnter);
   host.addEventListener("dragleave", dragLeave);
