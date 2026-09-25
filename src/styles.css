@@ -60,6 +60,15 @@ button {
   cursor: pointer;
   transition: transform 100ms ease-out; /* release snaps back quickly */
 }
+/* Motion tokens (matches learn-tool's input.css palette) — three curves,
+   one per job: --ease-out for entrances/feedback, --ease-in-out for two-way
+   moves, --ease-drawer for height reveals. These sit on :host so hosts can
+   override them alongside the --wb-* tokens. */
+:host {
+  --wb-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --wb-ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --wb-ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+}
 /* Press feedback (improve-animations plan 001): compact buttons compress
    slightly while held and snap back on release. Full-width list rows
    (.tbl > button, .col), tabs, and text links are excluded — rows scale
@@ -68,6 +77,15 @@ button {
 button:active {
   transform: scale(0.97);
   transition-duration: 160ms;
+}
+/* The exclusions the comment above promises — rows, columns, tabs and
+   segmented controls are full-width or state-signaling; press scale on
+   them reads as wobble, not feedback. */
+.tbl > button:active,
+.col:active,
+.tab:active,
+.seg button:active {
+  transform: none;
 }
 .spacer {
   flex: 1;
@@ -201,27 +219,34 @@ button:active {
 .tbl.open .chev {
   transform: rotate(90deg);
 }
+/* The reveal grows the list into place — the chevron rotation promises
+   height, so the content delivers it (same max-height + scrollHeight
+   idiom as learn-tool's sidebar sections). JS measures the open height
+   and writes it to --cols-h on toggle; the transition runs off that
+   variable so rapid toggles retarget smoothly (CSS transition, not a
+   keyframe). Opacity rides along from the @starting-style bridge. */
 .cols {
   display: none;
   padding: 0 6px 6px 20px;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition:
+    max-height 250ms var(--wb-ease-drawer),
+    opacity 180ms var(--wb-ease-out);
 }
 .tbl.open .cols {
   display: block;
+  max-height: var(--cols-h, 400px);
   opacity: 1;
-  transition: opacity 180ms ease-out;
-}
-/* Same idiom as the import modal's entrance bridge (styles.css:706). */
-@starting-style {
-  .tbl.open .cols {
-    opacity: 0;
-  }
 }
 @media (prefers-reduced-motion: reduce) {
   .tbl.open .chev {
     transform: none; /* drop rotation; the open state itself is the cue */
   }
-  .tbl.open .cols {
-    transition-duration: 120ms; /* keep the opacity fade, gentler */
+  .cols {
+    transition-duration: 120ms; /* keep the fade, drop the grow */
+    max-height: none;
   }
 }
 .col {
@@ -737,7 +762,10 @@ table.grid {
   justify-content: center;
   z-index: 50;
   opacity: 0;
-  transition: opacity 200ms ease-out, backdrop-filter 200ms ease-out;
+  /* backdrop-filter is not animated — it is a full-viewport paint, and
+     blurring 0→4px reads as wobble. The blur pops in with the overlay's
+     opacity fade; at 200ms nobody sees the step. */
+  transition: opacity 200ms ease-out;
 }
 .overlay.on {
   display: flex;

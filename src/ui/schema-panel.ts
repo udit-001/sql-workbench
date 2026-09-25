@@ -64,7 +64,10 @@ export class SchemaPanel {
       count.style.marginLeft = "auto";
       count.textContent = formatCount(table.rowCount);
       header.append(count);
-      header.addEventListener("click", () => block.classList.toggle("open"));
+      header.addEventListener("click", () => {
+        block.classList.toggle("open");
+        this.measureCols(cols);
+      });
 
       const cols = document.createElement("div");
       cols.className = "cols";
@@ -85,7 +88,27 @@ export class SchemaPanel {
       }
 
       block.append(header, cols);
+      // Blocks render open — measure once the column rows are in the DOM
+      // so --cols-h matches real content height from the first paint.
+      this.measureCols(cols);
       this.container.append(block);
     }
+  }
+
+  /**
+   * Write the open-state height of a `.cols` list to its `--cols-h`
+   * custom property so the max-height transition (styles.css, `.cols`)
+   * grows exactly to content instead of a guessed value. Called on mount
+   * (blocks start open) and on every toggle. Layout reads are batched
+   * per toggle — one forced reflow per click is fine here.
+   */
+  private measureCols(cols: HTMLElement): void {
+    // Temporarily open to measure content height regardless of state.
+    const wasOpen = cols.parentElement?.classList.contains("open") ?? true;
+    const block = cols.parentElement;
+    if (block && !wasOpen) block.classList.add("open");
+    const h = cols.scrollHeight;
+    if (block && !wasOpen) block.classList.remove("open");
+    cols.style.setProperty("--cols-h", `${h}px`);
   }
 }
